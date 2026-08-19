@@ -1,0 +1,12 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://main.gd" id="1_main"]
+[ext_resource type="PackedScene" path="res://roulette.tscn" id="2_roulette"]
+
+[node name="Main" type="Node2D"]
+script = ExtResource("1_main")
+
+[node name="Roulette" parent="." instance=ExtResource("2_roulette")]
+
+[node name="Pointer" type="Polygon2D" parent="."]
+polygon = PackedVector2Array(-17, -40, 17, -40, 0, 0)
