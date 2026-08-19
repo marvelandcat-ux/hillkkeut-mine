@@ -34,6 +34,7 @@ const DIM_LEVELS := {
 @onready var _shop: CanvasLayer = $Shop
 
 var _carat := 0
+var _unit_index := 0  # 지금까지 도달한 표시 단위. 여기서 올라갈 때만 룰렛을 교체한다
 var _upgrades := Upgrades.new()
 var _dim_tween: Tween = null
 
@@ -84,6 +85,18 @@ func _on_spun(index: int, mineral: String, multiplier: int) -> void:
 	_shards.burst(origin, mineral, _shard_reach(mineral, origin), wedge.color)
 
 	_refresh_pulse()
+	_advance_palette()
+
+
+## 표시 단위가 한 칸 올라가면 룰렛을 통째로 교체한다.
+## 상점에서 캐럿을 써서 단위가 내려가도 되돌리지 않는다 — 경계에서 연출이 반복되기 때문
+func _advance_palette() -> void:
+	var unit := CaratFormat.unit_index(_carat)
+	if unit <= _unit_index:
+		return
+	_unit_index = unit
+	_roulette.play_transition(unit)
+	_shop.set_palette(unit)  # 상점 룰렛은 연출 없이 바로 새 색
 
 
 func _open_shop() -> void:

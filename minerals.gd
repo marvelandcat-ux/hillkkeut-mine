@@ -8,13 +8,16 @@ const ORDER := [
 
 const COUNT := 12
 
-# 임시 팔레트. 배수가 클수록 따뜻한 색이라는 온도 순서만 지키면 된다
-const COLORS := {
-	"돌": Color("888780"),
-	"철": Color("1D9E75"),
-	"금": Color("7F77DD"),
-	"다이아": Color("EF9F27"),
-}
+## 돌은 언제나 무채색이라 팔레트가 바뀌어도 그대로다
+const STONE_COLOR := Color("888780")
+
+## 룰렛이 교체될 때마다 한 칸씩 이동하는 팔레트.
+## 어느 단계에서든 철이 가장 차갑고 다이아가 가장 따뜻하다 — 이 온도 순서는 절대 안 뒤집힌다
+const PALETTES := [
+	{"철": Color("1D9E75"), "금": Color("7F77DD"), "다이아": Color("EF9F27")},
+	{"철": Color("378ADD"), "금": Color("D4537E"), "다이아": Color("D85A30")},
+	{"철": Color("7F77DD"), "금": Color("D85A30"), "다이아": Color("E24B4A")},
+]
 
 const BASE_MULTIPLIERS := {
 	"돌": 1,
@@ -41,3 +44,11 @@ const UPGRADE_FIRST_MESSAGE := {
 
 static func wedge_count(mineral: String) -> int:
 	return ORDER.count(mineral)
+
+
+## step 단계에서 그 광물이 가지는 색. 단계가 팔레트 수를 넘으면 색상환처럼 처음으로 돈다
+static func color(mineral: String, step: int) -> Color:
+	if mineral == "돌":
+		return STONE_COLOR
+	var palette: Dictionary = PALETTES[step % PALETTES.size()]
+	return palette[mineral]

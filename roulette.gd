@@ -24,6 +24,10 @@ const NUMBER_COLOR := Color("14140F")
 const PULSE_PERIOD := 2.0
 const PULSE_PEAK := Color(1.35, 1.35, 1.35)
 
+# 룰렛 교체 연출. 흰색 플래시는 쓰지 않는다 — 어두운 방에서 보는 유저가 대부분이다
+const DOMINO_STEP_DELAY := 0.03  # 12칸 × 0.03 = 0.36초
+const FLIP_TIME := 0.5
+
 enum State {
 	SPINNING,  # 상시 회전 중
 	SLOWING,  # 결과가 정해졌고 그 칸으로 감속하는 중
@@ -49,6 +53,10 @@ var _skipped := false  # 빨리감기는 한 번만 먹힌다
 var _upgrades: Upgrades = null
 var _pulsing: Array = []  # 지금 강화할 수 있어서 맥동시킬 광물들
 var _pulse_time := 0.0
+var _palette_step := 0
+var _transition_tween: Tween = null
+var _transition_count := 0
+var _flip_target := 1.0  # 뒤집힘 연출이 끝나야 할 scale.x. 스킵할 때 여기로 맞춘다
 
 
 func _ready() -> void:
@@ -56,11 +64,16 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
-	if idle_spin and _state == State.SPINNING:
+	# 연출 중에는 회전을 멈춘다. 그 정적 자체가 "뭔가 온다"는 신호다
+	if idle_spin and _state == State.SPINNING and not is_transitioning():
 		rotation += SPIN_SPEED * delta
+
 	# 숫자는 룰렛과 같이 돌지 않고 항상 똑바로 선다. 바퀴처럼 눕히면 아래쪽 칸이 거꾸로 읽힌다
+	var unmirror := -1.0 if scale.x < 0.0 else 1.0  # 룰렛이 뒤집혀도 숫자는 안 뒤집힌다
 	for number in _numbers:
 		number.rotation = -rotation
+		number.scale.x = unmirror
+
 	_animate_pulse(delta)
 
 
@@ -73,6 +86,11 @@ func bind_upgrades(upgrades: Upgrades) -> void:
 
 ## 화면 어디를 눌렀든 이 함수 하나로 들어온다. 조준이 없는 게임이라 위치를 받지 않는다
 func tap() -> void:
+	# 연출 중 탭은 스킵이다 (감속 스킵과 같은 문법)
+	if is_transitioning():
+		_skip_transition()
+		return
+
 	match _state:
 		State.SPINNING:
 			_start_slow_down()
@@ -145,7 +163,7 @@ func _build_wedges() -> void:
 		var wedge := Polygon2D.new()
 		wedge.name = "Wedge%02d" % index
 		wedge.polygon = _wedge_points(index)
-		wedge.color = Minerals.COLORS[mineral]
+		wedge.color = Minerals.color(mineral, _palette_step)
 		add_child(wedge)
 		_wedges.append(wedge)
 		_numbers.append(_make_number(index))
@@ -205,7 +223,63 @@ func _animate_pulse(delta: float) -> void:
 		_wedges[index].self_modulate = Color.WHITE.lerp(PULSE_PEAK, wave) if lit else Color.WHITE
 
 
-## 밖에서 칸 색을 바꾸기 위한 창구 (팔레트 교체에서 쓴다)
+func is_transitioning() -> bool:
+	return _transition_tween != null and _transition_tween.is_valid()
+
+
+## 표시 단위가 바뀔 때 룰렛을 통째로 교체한다. 연출 2종을 번갈아 재생한다
+func play_transition(step: int) -> void:
+	if is_transitioning():
+		_skip_transition()
+	_palette_step = step
+	_transition_count += 1
+	if _transition_count % 2 == 1:
+		_play_domino()
+	else:
+		_play_flip()
+
+
+## 연출 없이 바로 새 색으로. 상점에 띄운 룰렛이 쓴다
+func set_palette(step: int) -> void:
+	_palette_step = step
+	_paint_all()
+
+
+## 도미노 — 12칸이 한 칸씩 물든다. 회전 방향(인덱스가 커지는 쪽)과 같은 순서다
+func _play_domino() -> void:
+	_flip_target = scale.x
+	_transition_tween = create_tween()
+	for index in WEDGE_COUNT:
+		_transition_tween.tween_callback(_paint_wedge.bind(index))
+		_transition_tween.tween_interval(DOMINO_STEP_DELAY)
+
+
+## 뒤집힘 — Y축으로 180도. 폭이 0이 되는 가운데에서 색을 바꿔야 교체 순간이 안 보인다
+func _play_flip() -> void:
+	_flip_target = -1.0 if scale.x > 0.0 else 1.0
+	_transition_tween = create_tween()
+	_transition_tween.tween_property(self, "scale:x", 0.0, FLIP_TIME / 2.0)
+	_transition_tween.tween_callback(_paint_all)
+	_transition_tween.tween_property(self, "scale:x", _flip_target, FLIP_TIME / 2.0)
+
+
+func _skip_transition() -> void:
+	_transition_tween.kill()
+	_transition_tween = null
+	_paint_all()
+	scale.x = _flip_target
+
+
+func _paint_wedge(index: int) -> void:
+	_wedges[index].color = Minerals.color(Minerals.ORDER[index], _palette_step)
+
+
+func _paint_all() -> void:
+	for index in _wedges.size():
+		_paint_wedge(index)
+
+
+## 밖에서 칸 색을 바꾸기 위한 창구
 func set_wedge_color(index: int, color: Color) -> void:
 	if index < 0 or index >= _wedges.size():
 		push_warning("칸 인덱스가 범위를 벗어났다: %d" % index)

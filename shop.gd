@@ -48,6 +48,10 @@ func set_pulsing(minerals: Array) -> void:
 	_roulette.set_pulsing(minerals)
 
 
+func set_palette(step: int) -> void:
+	_roulette.set_palette(step)
+
+
 ## 칸 판정은 각도로 한다. 부채꼴 하나하나에 버튼을 붙이지 않아도 되고 회전 중에도 맞는다
 func _on_backdrop_input(event: InputEvent) -> void:
 	var pressed := false

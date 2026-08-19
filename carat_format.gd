@@ -11,17 +11,24 @@ static func to_text(amount: int) -> String:
 	return "%s 캐럿" % to_number_text(amount)
 
 
+## 지금 몇 번째 단위로 표시되는지 (0=원, 1=만, 2=억...). 룰렛 교체 시점을 여기서 잡는다
+static func unit_index(amount: int) -> int:
+	var index := 0
+	var value := float(amount)
+	# 가장 큰 단위로 나눠서 1 이상 10000 미만이 되게 한다
+	while value >= UNIT_STEP and index < UNIT_NAMES.size() - 1:
+		value /= UNIT_STEP
+		index += 1
+	return index
+
+
 ## "1,234" / "1.23 만" / "5,678 만" 처럼 단위까지 붙인 숫자 부분
 static func to_number_text(amount: int) -> String:
-	var unit_index := 0
-	var mantissa := float(amount)
-	# 가장 큰 단위로 나눠서 1 이상 10000 미만이 되게 한다
-	while mantissa >= UNIT_STEP and unit_index < UNIT_NAMES.size() - 1:
-		mantissa /= UNIT_STEP
-		unit_index += 1
-
-	if unit_index == 0:
+	var index := unit_index(amount)
+	if index == 0:
 		return _with_commas(amount)
+
+	var mantissa := float(amount) / pow(float(UNIT_STEP), index)
 
 	# 반올림하면 가진 것보다 많아 보이고 9999.9가 10,000으로 튀어 자릿수가 넘친다. 그래서 버린다
 	var number := ""
@@ -32,7 +39,7 @@ static func to_number_text(amount: int) -> String:
 	else:
 		number = _with_commas(int(mantissa))  # 5,678
 
-	return "%s %s" % [number, UNIT_NAMES[unit_index]]
+	return "%s %s" % [number, UNIT_NAMES[index]]
 
 
 ## 소수점 아래 digits자리까지 남기고 버림
