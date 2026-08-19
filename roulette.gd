@@ -4,28 +4,7 @@ extends Node2D
 ## 멈춘 결과를 알린다. 캐럿 누적·연출은 모두 이 시그널을 받아서 처리한다
 signal spun(index: int, mineral: String, multiplier: int)
 
-# 이웃 순서는 게임 규칙상 고정이다 — 순서가 바뀌면 유저가 눈에 익힌 판독이 깨진다
-const MINERALS := [
-	"다이아", "돌", "철", "돌", "철", "돌",
-	"금", "돌", "철", "돌", "철", "돌",
-]
-
-# 임시 팔레트. 배수가 클수록 따뜻한 색이라는 온도 순서만 지키면 된다
-const MINERAL_COLORS := {
-	"돌": Color("888780"),
-	"철": Color("1D9E75"),
-	"금": Color("7F77DD"),
-	"다이아": Color("EF9F27"),
-}
-
-const MULTIPLIERS := {
-	"돌": 1,
-	"철": 3,
-	"금": 10,
-	"다이아": 100,
-}
-
-const WEDGE_COUNT := 12
+const WEDGE_COUNT := Minerals.COUNT
 const WEDGE_ANGLE := TAU / WEDGE_COUNT  # 한 칸이 차지하는 각도(30도)
 const ARC_SEGMENTS := 8  # 부채꼴 호를 나누는 조각 수. 클수록 원이 매끄럽다
 const WEDGE_RIM_RATIO := 0.95  # 파편이 튀어나오는 지점. 안쪽에서 튀면 같은 색 룰렛에 묻혀 안 보인다
@@ -35,6 +14,15 @@ const UP_ANGLE := -PI / 2.0  # 12시 방향. Godot는 y축이 아래로 향해�
 const SLOW_DOWN_TIME := 3.0  # 첫 탭 후 멈추기까지 걸리는 시간
 const SKIP_SPEED_SCALE := 6.0  # 두 번째 탭의 빨리감기 배속 (3초 → 0.5초)
 const MIN_EXTRA_TURNS := 2  # 목표 칸에 도달하기 전 최소로 더 도는 바퀴 수
+
+# 칸에 적히는 배수 숫자
+const NUMBER_SIZE_RATIO := 0.11  # 반지름 대비 글자 크기
+const NUMBER_RADIUS_RATIO := 0.63  # 숫자를 놓을 위치 (중심에서 얼마나 바깥인지)
+const NUMBER_COLOR := Color("14140F")
+
+# 강화할 수 있는 칸은 천천히 맥동한다. 빠르게 깜빡이면 영상 시청에 방해된다
+const PULSE_PERIOD := 2.0
+const PULSE_PEAK := Color(1.35, 1.35, 1.35)
 
 enum State {
 	SPINNING,  # 상시 회전 중
@@ -49,11 +37,18 @@ enum State {
 		if is_node_ready():
 			_build_wedges()
 
+## 상점에 띄우는 룰렛은 돌지 않는다 (게임용 룰렛과 같은 노드를 그대로 쓰기 위한 스위치)
+@export var idle_spin: bool = true
+
 var _wedges: Array[Polygon2D] = []  # 인덱스 0~11로 칸에 바로 접근하려고 배열로 들고 있는다
+var _numbers: Array[Label] = []
 var _state := State.SPINNING
 var _result_index := -1  # 첫 탭에서 확정된 결과. 연출이 끝날 때까지 이 값은 변하지 않는다
 var _slow_down_tween: Tween = null
 var _skipped := false  # 빨리감기는 한 번만 먹힌다
+var _upgrades: Upgrades = null
+var _pulsing: Array = []  # 지금 강화할 수 있어서 맥동시킬 광물들
+var _pulse_time := 0.0
 
 
 func _ready() -> void:
@@ -61,8 +56,19 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
-	if _state == State.SPINNING:
+	if idle_spin and _state == State.SPINNING:
 		rotation += SPIN_SPEED * delta
+	# 숫자는 룰렛과 같이 돌지 않고 항상 똑바로 선다. 바퀴처럼 눕히면 아래쪽 칸이 거꾸로 읽힌다
+	for number in _numbers:
+		number.rotation = -rotation
+	_animate_pulse(delta)
+
+
+## 강화 상태를 물려준다. 룰렛이 두 개라 배수는 바깥에서 공유한다
+func bind_upgrades(upgrades: Upgrades) -> void:
+	_upgrades = upgrades
+	_upgrades.changed.connect(_refresh_numbers)
+	_refresh_numbers()
 
 
 ## 화면 어디를 눌렀든 이 함수 하나로 들어온다. 조준이 없는 게임이라 위치를 받지 않는다
@@ -102,8 +108,8 @@ func _on_slow_down_finished() -> void:
 	_slow_down_tween = null
 	rotation = fposmod(rotation, TAU)  # 각도가 무한정 커지면 정밀도가 떨어져서 한 바퀴 안으로 접는다
 
-	var mineral: String = MINERALS[_result_index]
-	spun.emit(_result_index, mineral, MULTIPLIERS[mineral])
+	var mineral: String = Minerals.ORDER[_result_index]
+	spun.emit(_result_index, mineral, multiplier_of(mineral))
 
 
 func _start_spin() -> void:
@@ -119,18 +125,32 @@ func _target_rotation(index: int) -> float:
 	return aligned + ceil((earliest - aligned) / TAU) * TAU
 
 
+func multiplier_of(mineral: String) -> int:
+	if _upgrades == null:
+		return Minerals.BASE_MULTIPLIERS[mineral]
+	return _upgrades.multiplier(mineral)
+
+
 ## 12칸을 각각 독립 노드로 만든다. 칸마다 색을 따로 바꿔야 해서 통짜 이미지를 쓰지 않는다
 func _build_wedges() -> void:
 	for wedge in _wedges:
 		wedge.queue_free()
+	for number in _numbers:
+		number.queue_free()
 	_wedges.clear()
+	_numbers.clear()
+
 	for index in WEDGE_COUNT:
+		var mineral: String = Minerals.ORDER[index]
 		var wedge := Polygon2D.new()
 		wedge.name = "Wedge%02d" % index
 		wedge.polygon = _wedge_points(index)
-		wedge.color = MINERAL_COLORS[MINERALS[index]]
+		wedge.color = Minerals.COLORS[mineral]
 		add_child(wedge)
 		_wedges.append(wedge)
+		_numbers.append(_make_number(index))
+
+	_refresh_numbers()
 
 
 ## index번 칸의 부채꼴 꼭짓점. 0번 칸의 중심이 12시를 향하도록 배치한다
@@ -143,7 +163,49 @@ func _wedge_points(index: int) -> PackedVector2Array:
 	return points
 
 
-## 밖에서 칸 색을 바꾸기 위한 창구 (강화 표시·팔레트 교체에서 쓴다)
+## 칸에 적히는 배수 숫자. 위치만 룰렛을 따라 돌고 글자는 항상 똑바로 선다
+func _make_number(index: int) -> Label:
+	var font_size := maxf(radius * NUMBER_SIZE_RATIO, 8.0)
+	var label := Label.new()
+	KoreanFont.apply(label, int(font_size), NUMBER_COLOR)
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE  # 칸 판정은 각도로 하므로 라벨은 입력을 안 먹는다
+
+	var angle := UP_ANGLE + index * WEDGE_ANGLE
+	label.size = Vector2(font_size * 3.4, font_size * 1.5)
+	label.pivot_offset = label.size / 2.0
+	label.position = Vector2.from_angle(angle) * radius * NUMBER_RADIUS_RATIO - label.size / 2.0
+	label.rotation = -rotation
+	add_child(label)
+	return label
+
+
+func _refresh_numbers() -> void:
+	for index in _numbers.size():
+		_numbers[index].text = "×%d" % multiplier_of(Minerals.ORDER[index])
+
+
+## 강화할 수 있게 된 광물들. 여기 담긴 칸만 맥동한다 (뱃지·팝업 대신 쓰는 유일한 신호)
+func set_pulsing(minerals: Array) -> void:
+	_pulsing = minerals
+	if _pulsing.is_empty():
+		_pulse_time = 0.0
+		for wedge in _wedges:
+			wedge.self_modulate = Color.WHITE
+
+
+func _animate_pulse(delta: float) -> void:
+	if _pulsing.is_empty():
+		return
+	_pulse_time = fmod(_pulse_time + delta, PULSE_PERIOD)
+	var wave := 0.5 - 0.5 * cos(TAU * _pulse_time / PULSE_PERIOD)
+	for index in _wedges.size():
+		var lit: bool = Minerals.ORDER[index] in _pulsing
+		_wedges[index].self_modulate = Color.WHITE.lerp(PULSE_PEAK, wave) if lit else Color.WHITE
+
+
+## 밖에서 칸 색을 바꾸기 위한 창구 (팔레트 교체에서 쓴다)
 func set_wedge_color(index: int, color: Color) -> void:
 	if index < 0 or index >= _wedges.size():
 		push_warning("칸 인덱스가 범위를 벗어났다: %d" % index)
@@ -151,7 +213,7 @@ func set_wedge_color(index: int, color: Color) -> void:
 	_wedges[index].color = color
 
 
-## 칸 노드 자체가 필요할 때 쓴다 (맥동 연출 등)
+## 칸 노드 자체가 필요할 때 쓴다
 func get_wedge(index: int) -> Polygon2D:
 	if index < 0 or index >= _wedges.size():
 		return null
@@ -162,3 +224,13 @@ func get_wedge(index: int) -> Polygon2D:
 func get_wedge_rim_global(index: int) -> Vector2:
 	var angle := UP_ANGLE + index * WEDGE_ANGLE
 	return to_global(Vector2.from_angle(angle) * radius * WEDGE_RIM_RATIO)
+
+
+## 화면 좌표가 몇 번 칸인지. 룰렛 바깥이면 -1.
+## to_local이 회전을 이미 반영해서 돌아가는 중에도 맞는다
+func wedge_at_global(point: Vector2) -> int:
+	var local := to_local(point)
+	if local.length() > radius:
+		return -1
+	var angle := fposmod(local.angle() - UP_ANGLE + WEDGE_ANGLE / 2.0, TAU)
+	return int(angle / WEDGE_ANGLE) % WEDGE_COUNT

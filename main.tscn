@@ -1,8 +1,9 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://main.gd" id="1_main"]
 [ext_resource type="PackedScene" path="res://roulette.tscn" id="2_roulette"]
 [ext_resource type="Script" path="res://shards.gd" id="3_shards"]
+[ext_resource type="PackedScene" path="res://shop.tscn" id="4_shop"]
 
 [node name="Main" type="Node2D"]
 script = ExtResource("1_main")
@@ -28,6 +29,21 @@ grow_horizontal = 2
 grow_vertical = 0
 horizontal_alignment = 1
 vertical_alignment = 1
+
+[node name="ShopButton" type="Button" parent="UI"]
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -100.0
+offset_top = -85.0
+offset_right = 100.0
+offset_bottom = -20.0
+grow_horizontal = 2
+grow_vertical = 0
+text = "상점"
+
+[node name="Shop" parent="." instance=ExtResource("4_shop")]
 
 [node name="Dim" type="CanvasLayer" parent="."]
 layer = 10

@@ -9,11 +9,9 @@ const POINTER_COLOR := Color("F2F0EA")
 
 const TOP_DEAD_ZONE_RATIO := 1.0 / 3.0  # 상단 1/3은 PIP 영상에 가려지는 영역이라 탭 판정에서 뺀다
 
-# 기본 폰트에는 한글 글리프가 없어서 두부(□)로 나온다. OFL 폰트를 프로젝트에 넣어 쓴다
-const CARAT_FONT := preload("res://fonts/noto_sans_kr.ttf")
 const CARAT_FONT_SIZE := 62
-const CARAT_FONT_WEIGHT := 600
 const CARAT_FONT_COLOR := Color("F2F0EA")
+const SHOP_BUTTON_FONT_SIZE := 32
 
 # 평상시에도 화면을 살짝 덮어둔다. 이 여유분이 있어야 "밝아지는" 연출이 가능하다
 const REST_DIM_ALPHA := 0.15
@@ -30,18 +28,28 @@ const DIM_LEVELS := {
 @onready var _roulette: Roulette = $Roulette
 @onready var _pointer: Polygon2D = $Pointer
 @onready var _carat_label: Label = $UI/CaratLabel
+@onready var _shop_button: Button = $UI/ShopButton
 @onready var _shards: Node2D = $Shards
 @onready var _dim: ColorRect = $Dim/DimRect
+@onready var _shop: CanvasLayer = $Shop
 
 var _carat := 0
+var _upgrades := Upgrades.new()
 var _dim_tween: Tween = null
 
 
 func _ready() -> void:
-	_setup_carat_label()
+	_setup_labels()
 	_layout()
 	get_viewport().size_changed.connect(_layout)  # 기기 해상도가 달라도 같은 비율을 유지한다
+
+	_roulette.bind_upgrades(_upgrades)
 	_roulette.spun.connect(_on_spun)
+
+	_shop.setup(_upgrades)
+	_shop.wedge_pressed.connect(_on_shop_wedge_pressed)
+	_shop_button.pressed.connect(_open_shop)
+	_refresh_pulse()
 
 
 ## 조준이 없는 게임이라 위치는 "상단 1/3인가 아닌가"만 보고 버린다
@@ -74,6 +82,41 @@ func _on_spun(index: int, mineral: String, multiplier: int) -> void:
 	# 색은 상수가 아니라 지금 칸에 칠해진 색을 쓴다 (팔레트가 바뀌어도 따라간다)
 	var wedge := _roulette.get_wedge(index)
 	_shards.burst(origin, mineral, _shard_reach(mineral, origin), wedge.color)
+
+	_refresh_pulse()
+
+
+func _open_shop() -> void:
+	_shop.open("보유 %s" % CaratFormat.to_text(_carat))
+
+
+## 강화 판정. 돈과 순서 잠금은 여기서만 본다 (상점은 어느 칸을 눌렀는지만 알려준다)
+func _on_shop_wedge_pressed(mineral: String) -> void:
+	var blocker: String = _upgrades.blocked_by(mineral)
+	if not blocker.is_empty():
+		_shop.show_message(Minerals.UPGRADE_FIRST_MESSAGE[blocker])
+		return
+
+	var price: int = _upgrades.price(mineral)
+	if _carat < price:
+		_shop.show_message("%s 필요" % CaratFormat.to_text(price))
+		return
+
+	_carat -= price
+	_upgrades.upgrade(mineral)
+	_carat_label.text = CaratFormat.to_text(_carat)
+	_shop.show_message("%s ×%d · 보유 %s" % [mineral, _upgrades.multiplier(mineral), CaratFormat.to_text(_carat)])
+	_refresh_pulse()
+
+
+## 살 수 있게 된 칸만 맥동시킨다. 뱃지도 팝업도 쓰지 않으므로 이게 유일한 신호다
+func _refresh_pulse() -> void:
+	var affordable := []
+	for mineral in Minerals.BASE_MULTIPLIERS:
+		if _upgrades.can_upgrade(mineral, _carat):
+			affordable.append(mineral)
+	_roulette.set_pulsing(affordable)
+	_shop.set_pulsing(affordable)
 
 
 ## ★시스템 밝기 API를 쓰지 않는다★
@@ -108,17 +151,9 @@ func _shard_reach(mineral: String, origin: Vector2) -> float:
 			return 0.0
 
 
-func _setup_carat_label() -> void:
-	var text_server := TextServerManager.get_primary_interface()
-	var font := FontVariation.new()
-	font.base_font = CARAT_FONT
-	font.variation_opentype = {text_server.name_to_tag("wght"): CARAT_FONT_WEIGHT}
-	# tnum(고정폭 숫자). 숫자마다 폭이 달라지면 값이 오를 때 라벨이 떨려 보인다
-	font.opentype_features = {text_server.name_to_tag("tnum"): 1}
-
-	_carat_label.add_theme_font_override("font", font)
-	_carat_label.add_theme_font_size_override("font_size", CARAT_FONT_SIZE)
-	_carat_label.add_theme_color_override("font_color", CARAT_FONT_COLOR)
+func _setup_labels() -> void:
+	KoreanFont.apply(_carat_label, CARAT_FONT_SIZE, CARAT_FONT_COLOR)
+	KoreanFont.apply(_shop_button, SHOP_BUTTON_FONT_SIZE, CARAT_FONT_COLOR)
 	_carat_label.text = CaratFormat.to_text(_carat)
 
 
