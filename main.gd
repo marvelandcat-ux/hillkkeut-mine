@@ -9,11 +9,21 @@ const POINTER_COLOR := Color("F2F0EA")
 
 const TOP_DEAD_ZONE_RATIO := 1.0 / 3.0  # 상단 1/3은 PIP 영상에 가려지는 영역이라 탭 판정에서 뺀다
 
+# 기본 폰트에는 한글 글리프가 없어서 두부(□)로 나온다. OFL 폰트를 프로젝트에 넣어 쓴다
+const CARAT_FONT := preload("res://fonts/noto_sans_kr.ttf")
+const CARAT_FONT_SIZE := 62
+const CARAT_FONT_WEIGHT := 600
+const CARAT_FONT_COLOR := Color("F2F0EA")
+
 @onready var _roulette: Roulette = $Roulette
 @onready var _pointer: Polygon2D = $Pointer
+@onready var _carat_label: Label = $UI/CaratLabel
+
+var _carat := 0
 
 
 func _ready() -> void:
+	_setup_carat_label()
 	_layout()
 	get_viewport().size_changed.connect(_layout)  # 기기 해상도가 달라도 같은 비율을 유지한다
 	_roulette.spun.connect(_on_spun)
@@ -40,9 +50,23 @@ func _unhandled_input(event: InputEvent) -> void:
 	get_viewport().set_input_as_handled()
 
 
-func _on_spun(index: int, mineral: String, multiplier: int) -> void:
-	# 3단계에서 캐럿 누적으로 바뀔 자리. 지금은 결과가 맞게 나오는지 눈으로 확인하는 용도다
-	print("%d번 칸 · %s · x%d" % [index, mineral, multiplier])
+func _on_spun(_index: int, _mineral: String, multiplier: int) -> void:
+	_carat += multiplier
+	_carat_label.text = CaratFormat.to_text(_carat)
+
+
+func _setup_carat_label() -> void:
+	var text_server := TextServerManager.get_primary_interface()
+	var font := FontVariation.new()
+	font.base_font = CARAT_FONT
+	font.variation_opentype = {text_server.name_to_tag("wght"): CARAT_FONT_WEIGHT}
+	# tnum(고정폭 숫자). 숫자마다 폭이 달라지면 값이 오를 때 라벨이 떨려 보인다
+	font.opentype_features = {text_server.name_to_tag("tnum"): 1}
+
+	_carat_label.add_theme_font_override("font", font)
+	_carat_label.add_theme_font_size_override("font_size", CARAT_FONT_SIZE)
+	_carat_label.add_theme_color_override("font_color", CARAT_FONT_COLOR)
+	_carat_label.text = CaratFormat.to_text(_carat)
 
 
 func _layout() -> void:

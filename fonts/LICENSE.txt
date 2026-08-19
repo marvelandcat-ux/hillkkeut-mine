@@ -1,0 +1,5 @@
+Noto Sans KR — SIL Open Font License 1.1
+https://fonts.google.com/noto/specimen/Noto+Sans+KR
+전문: https://openfontlicense.org/
+
+OFL 폰트라 게임에 함께 배포해도 된다. (시스템 폰트인 맑은 고딕은 배포 불가)
