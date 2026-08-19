@@ -28,6 +28,7 @@ const MULTIPLIERS := {
 const WEDGE_COUNT := 12
 const WEDGE_ANGLE := TAU / WEDGE_COUNT  # 한 칸이 차지하는 각도(30도)
 const ARC_SEGMENTS := 8  # 부채꼴 호를 나누는 조각 수. 클수록 원이 매끄럽다
+const WEDGE_RIM_RATIO := 0.95  # 파편이 튀어나오는 지점. 안쪽에서 튀면 같은 색 룰렛에 묻혀 안 보인다
 const SPIN_SPEED := TAU / 2.0  # 상시 회전 속도(초당 180도)
 const UP_ANGLE := -PI / 2.0  # 12시 방향. Godot는 y축이 아래로 향해서 위쪽이 -90도다
 
@@ -155,3 +156,9 @@ func get_wedge(index: int) -> Polygon2D:
 	if index < 0 or index >= _wedges.size():
 		return null
 	return _wedges[index]
+
+
+## index번 칸의 바깥 테두리 좌표. 회전까지 반영되므로 멈춘 칸이면 포인터 아래가 나온다
+func get_wedge_rim_global(index: int) -> Vector2:
+	var angle := UP_ANGLE + index * WEDGE_ANGLE
+	return to_global(Vector2.from_angle(angle) * radius * WEDGE_RIM_RATIO)

@@ -15,11 +15,26 @@ const CARAT_FONT_SIZE := 62
 const CARAT_FONT_WEIGHT := 600
 const CARAT_FONT_COLOR := Color("F2F0EA")
 
+# 평상시에도 화면을 살짝 덮어둔다. 이 여유분이 있어야 "밝아지는" 연출이 가능하다
+const REST_DIM_ALPHA := 0.15
+const DIM_IN_TIME := 0.06  # 밝아지는 건 빠르게 (결과가 나온 순간과 붙어야 한다)
+const DIM_RECOVER_TIME := 0.30  # 되돌아오는 건 느리게
+# 등급이 올라갈수록 더 밝아지고 더 오래 간다. 이게 안 보고도 읽는 첫 번째 단서다
+const DIM_LEVELS := {
+	"돌": {"alpha": 0.15, "hold": 0.0},
+	"철": {"alpha": 0.10, "hold": 0.3},
+	"금": {"alpha": 0.00, "hold": 0.3},
+	"다이아": {"alpha": 0.00, "hold": 1.0},
+}
+
 @onready var _roulette: Roulette = $Roulette
 @onready var _pointer: Polygon2D = $Pointer
 @onready var _carat_label: Label = $UI/CaratLabel
+@onready var _shards: Node2D = $Shards
+@onready var _dim: ColorRect = $Dim/DimRect
 
 var _carat := 0
+var _dim_tween: Tween = null
 
 
 func _ready() -> void:
@@ -50,9 +65,47 @@ func _unhandled_input(event: InputEvent) -> void:
 	get_viewport().set_input_as_handled()
 
 
-func _on_spun(_index: int, _mineral: String, multiplier: int) -> void:
+func _on_spun(index: int, mineral: String, multiplier: int) -> void:
 	_carat += multiplier
 	_carat_label.text = CaratFormat.to_text(_carat)
+	_flash_dim(mineral)
+
+	var origin := _roulette.get_wedge_rim_global(index)
+	# 색은 상수가 아니라 지금 칸에 칠해진 색을 쓴다 (팔레트가 바뀌어도 따라간다)
+	var wedge := _roulette.get_wedge(index)
+	_shards.burst(origin, mineral, _shard_reach(mineral, origin), wedge.color)
+
+
+## ★시스템 밝기 API를 쓰지 않는다★
+## 그걸 건드리면 위에 떠 있는 유튜브 PIP 영상까지 같이 어두워진다. 오버레이로만 한다
+func _flash_dim(mineral: String) -> void:
+	var level: Dictionary = DIM_LEVELS[mineral]
+	var target: float = clampf(level["alpha"], 0.0, REST_DIM_ALPHA)  # 밝아지되 0 밑으로는 안 간다
+	if is_equal_approx(target, REST_DIM_ALPHA):
+		return  # 돌은 변화 없음
+
+	if _dim_tween != null and _dim_tween.is_valid():
+		_dim_tween.kill()
+	_dim_tween = create_tween()
+	_dim_tween.tween_property(_dim, "color:a", target, DIM_IN_TIME)
+	_dim_tween.tween_interval(level["hold"])
+	_dim_tween.tween_property(_dim, "color:a", REST_DIM_ALPHA, DIM_RECOVER_TIME)
+
+
+## 파편이 위로 얼마나 도달하게 할지. 등급 차이는 개수가 아니라 이 범위에서 온다.
+## 셋 다 "출발점에서 화면 위 끝까지"라는 하나의 자로 잰다 —
+## 기준이 섞이면 화면 비율에 따라 철 < 금 < 다이아 순서가 뒤집힐 수 있다.
+## 720x1280 기준: 철 100px(칸 주변) / 금 313px(룰렛 크기) / 다이아 625px(화면 끝)
+func _shard_reach(mineral: String, origin: Vector2) -> float:
+	match mineral:
+		"철":
+			return origin.y * 0.16
+		"금":
+			return origin.y * 0.50
+		"다이아":
+			return origin.y
+		_:
+			return 0.0
 
 
 func _setup_carat_label() -> void:
