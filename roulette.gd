@@ -68,11 +68,13 @@ func _process(delta: float) -> void:
 	if idle_spin and _state == State.SPINNING and not is_transitioning():
 		rotation += SPIN_SPEED * delta
 
-	# 숫자는 룰렛과 같이 돌지 않고 항상 똑바로 선다. 바퀴처럼 눕히면 아래쪽 칸이 거꾸로 읽힌다
-	var unmirror := -1.0 if scale.x < 0.0 else 1.0  # 룰렛이 뒤집혀도 숫자는 안 뒤집힌다
+	# 숫자는 룰렛과 같이 돌지 않고 항상 똑바로 선다. 바퀴처럼 눕히면 아래쪽 칸이 거꾸로 읽힌다.
+	# 뒤집힘 연출 뒤에는 룰렛이 거울반전 상태로 남는데, 그러면 회전도 반대로 보여서
+	# 상쇄하려면 부호를 같이 뒤집어야 한다. 안 그러면 글자가 두 배로 돌아간다
+	var mirrored := scale.x < 0.0
 	for number in _numbers:
-		number.rotation = -rotation
-		number.scale.x = unmirror
+		number.rotation = rotation if mirrored else -rotation
+		number.scale.x = -1.0 if mirrored else 1.0
 
 	_animate_pulse(delta)
 
