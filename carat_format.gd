@@ -5,6 +5,7 @@ class_name CaratFormat
 
 const UNIT_STEP := 10000  # 한국식 4자리 단위
 const UNIT_NAMES := ["", "만", "억", "조", "경"]
+const SWAP_START := 100  # 룰렛 교체가 시작되는 캐럿
 
 
 static func to_text(amount: int) -> String:
@@ -20,6 +21,14 @@ static func unit_index(amount: int) -> int:
 		value /= UNIT_STEP
 		index += 1
 	return index
+
+
+## 룰렛 교체 단계. 만/억은 10,000배씩 벌어져 있어서 그 주기로는 교체가 너무 드물다.
+## 자릿수가 하나 늘 때마다(10배) 한 칸 올린다 — 숫자가 자라는 게 눈에 보이는 주기다
+static func swap_step(amount: int) -> int:
+	if amount < SWAP_START:
+		return 0  # 첫 몇 판이 연출로 도배되지 않게 바닥을 둔다
+	return str(amount).length() - str(SWAP_START).length() + 1
 
 
 ## "1,234" / "1.23 만" / "5,678 만" 처럼 단위까지 붙인 숫자 부분
