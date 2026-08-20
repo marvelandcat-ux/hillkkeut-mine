@@ -128,11 +128,22 @@ func _on_slow_down_finished() -> void:
 	_slow_down_tween = null
 	rotation = fposmod(rotation, TAU)  # 각도가 무한정 커지면 정밀도가 떨어져서 한 바퀴 안으로 접는다
 
+	# 결과 없이 이 함수가 불릴 일은 없어야 한다. 그래도 들어오면 조용히 나간다 —
+	# GDScript는 음수 인덱스를 뒤에서부터 세기 때문에 엉뚱한 광물이 나가버린다
+	if _result_index < 0:
+		push_warning("결과 없이 감속이 끝났다")
+		return
+
 	var mineral: String = Minerals.ORDER[_result_index]
 	spun.emit(_result_index, mineral, multiplier_of(mineral))
 
 
 func _start_spin() -> void:
+	# 감속 트윈이 남아 있는 채로 다시 돌기 시작하면, 그 트윈이 나중에 끝나면서
+	# 결과 없는 상태로 결과를 쏘게 된다. 먼저 끊는다
+	if _slow_down_tween != null and _slow_down_tween.is_valid():
+		_slow_down_tween.kill()
+	_slow_down_tween = null
 	_state = State.SPINNING
 	_result_index = -1
 
