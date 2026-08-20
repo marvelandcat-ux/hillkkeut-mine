@@ -7,6 +7,8 @@ const POINTER_HEIGHT := 40.0
 const POINTER_GAP := 8.0  # 룰렛 테두리와 포인터 끝 사이 간격
 const POINTER_COLOR := Color("F2F0EA")
 
+const MAX_CARAT := 9_000_000_000_000_000_000  # 64비트 정수가 넘치기 전에 멈춘다
+
 const TOP_DEAD_ZONE_RATIO := 1.0 / 3.0  # 상단 1/3은 PIP 영상에 가려지는 영역이라 탭 판정에서 뺀다
 
 const CARAT_FONT_SIZE := 62
@@ -75,7 +77,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _on_spun(index: int, mineral: String, multiplier: int) -> void:
-	_carat += multiplier
+	_carat = mini(_carat + multiplier, MAX_CARAT)
 	_carat_label.text = CaratFormat.to_text(_carat)
 	_flash_dim(mineral)
 

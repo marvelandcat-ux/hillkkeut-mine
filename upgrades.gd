@@ -5,7 +5,10 @@ extends RefCounted
 
 signal changed
 
-const PRICE_UNIT := 52
+const PRICE_UNIT := 3
+
+## 배수 상한. 이걸 넘기면 캐럿이 64비트 정수 범위를 벗어나 값이 망가진다
+const MAX_MULTIPLIER := 1 << 50
 
 var _multipliers := Minerals.BASE_MULTIPLIERS.duplicate()
 
@@ -14,7 +17,7 @@ func multiplier(mineral: String) -> int:
 	return _multipliers[mineral]
 
 
-## 가격 = 52 × 칸 수 × 현재 배수.
+## 가격 = 계수 × 칸 수 × 현재 배수.
 ## 배수가 2배가 되면 가격도 2배가 되어서, 무엇을 몇 번 강화하든 캐럿당 이득이 같다. 의도된 설계다
 func price(mineral: String) -> int:
 	return PRICE_UNIT * Minerals.wedge_count(mineral) * multiplier(mineral)
@@ -31,7 +34,13 @@ func blocked_by(mineral: String) -> String:
 	return ""
 
 
+func is_maxed(mineral: String) -> bool:
+	return multiplier(mineral) >= MAX_MULTIPLIER
+
+
 func can_upgrade(mineral: String, carat: int) -> bool:
+	if is_maxed(mineral):
+		return false
 	return blocked_by(mineral).is_empty() and carat >= price(mineral)
 
 

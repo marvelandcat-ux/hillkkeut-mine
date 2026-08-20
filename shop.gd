@@ -79,6 +79,12 @@ func refresh(carat: int) -> void:
 		# 이름 색은 그 광물의 현재 색이다. 목록에서도 색 온도 순서가 그대로 보인다
 		name_label.add_theme_color_override("font_color", Minerals.color(mineral, _palette_step))
 
+		if _upgrades.is_maxed(mineral):
+			buy_button.text = "최대"
+			buy_button.disabled = true
+			_paint_button(buy_button, BUY_LOCKED_COLOR, DIM_TEXT_COLOR)
+			continue
+
 		var blocker: String = _upgrades.blocked_by(mineral)
 		if not blocker.is_empty():
 			buy_button.text = "먼저 %s" % blocker
