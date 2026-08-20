@@ -2,3 +2,7 @@
 .godot/
 /android/
 /build/
+
+# 프로젝트 폴더 안에 클론해둔 저장소 (게임 파일이 아니다)
+/hillkkeut-mine/
+/힐끗광산/
