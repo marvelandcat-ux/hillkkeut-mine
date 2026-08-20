@@ -48,7 +48,7 @@ func _ready() -> void:
 	_roulette.spun.connect(_on_spun)
 
 	_shop.setup(_upgrades)
-	_shop.wedge_pressed.connect(_on_shop_wedge_pressed)
+	_shop.upgrade_requested.connect(_on_upgrade_requested)
 	_shop_button.pressed.connect(_open_shop)
 	_refresh_pulse()
 
@@ -96,29 +96,23 @@ func _advance_palette() -> void:
 		return
 	_unit_index = unit
 	_roulette.play_transition(unit)
-	_shop.set_palette(unit)  # 상점 룰렛은 연출 없이 바로 새 색
+	_shop.set_palette(unit)  # 상점 목록의 광물 이름 색도 새 팔레트를 따라간다
 
 
 func _open_shop() -> void:
-	_shop.open("보유 %s" % CaratFormat.to_text(_carat))
+	_shop.open(_carat)
 
 
-## 강화 판정. 돈과 순서 잠금은 여기서만 본다 (상점은 어느 칸을 눌렀는지만 알려준다)
-func _on_shop_wedge_pressed(mineral: String) -> void:
-	var blocker: String = _upgrades.blocked_by(mineral)
-	if not blocker.is_empty():
-		_shop.show_message(Minerals.UPGRADE_FIRST_MESSAGE[blocker])
+## 강화 판정. 돈과 순서 잠금은 여기서만 본다 (상점은 어느 항목을 눌렀는지만 알려준다)
+func _on_upgrade_requested(mineral: String) -> void:
+	# 살 수 없으면 버튼이 이미 비활성이다. 상태가 어긋났을 때를 대비한 방어선
+	if not _upgrades.can_upgrade(mineral, _carat):
 		return
 
-	var price: int = _upgrades.price(mineral)
-	if _carat < price:
-		_shop.show_message("%s 필요" % CaratFormat.to_text(price))
-		return
-
-	_carat -= price
+	_carat -= _upgrades.price(mineral)
 	_upgrades.upgrade(mineral)
 	_carat_label.text = CaratFormat.to_text(_carat)
-	_shop.show_message("%s ×%d · 보유 %s" % [mineral, _upgrades.multiplier(mineral), CaratFormat.to_text(_carat)])
+	_shop.refresh(_carat)
 	_refresh_pulse()
 
 
@@ -129,7 +123,6 @@ func _refresh_pulse() -> void:
 		if _upgrades.can_upgrade(mineral, _carat):
 			affordable.append(mineral)
 	_roulette.set_pulsing(affordable)
-	_shop.set_pulsing(affordable)
 
 
 ## ★시스템 밝기 API를 쓰지 않는다★
