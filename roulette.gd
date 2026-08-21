@@ -184,9 +184,13 @@ func _start_spin() -> void:
 
 
 ## index번 칸의 중심이 12시 포인터에 오는 회전각.
-## 그 조건을 만족하는 각도는 2π 간격으로 무한히 많아서, 최소 2바퀴 뒤의 것을 고른다
+## 그 조건을 만족하는 각도는 2π 간격으로 무한히 많아서, 최소 2바퀴 뒤의 것을 고른다.
+## 뒤집힘 연출 뒤에는 룰렛이 거울반전 상태라 정렬 방향도 반대가 된다 —
+## 부호를 안 뒤집으면 결과 칸의 거울 위치에 있는 칸이 포인터에 와서
+## 파편이 엉뚱한 곳(철은 아래쪽)에서 튄다
 func _target_rotation(index: int) -> float:
-	var aligned := -index * WEDGE_ANGLE
+	var direction := 1.0 if scale.x < 0.0 else -1.0
+	var aligned := direction * index * WEDGE_ANGLE
 	var earliest := rotation + TAU * MIN_EXTRA_TURNS
 	return aligned + ceil((earliest - aligned) / TAU) * TAU
 
