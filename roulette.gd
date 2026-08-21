@@ -15,6 +15,10 @@ const SLOW_DOWN_TIME := 3.0  # 첫 탭 후 멈추기까지 걸리는 시간
 const SKIP_SPEED_SCALE := 6.0  # 두 번째 탭의 빨리감기 배속 (3초 → 0.5초)
 const MIN_EXTRA_TURNS := 2  # 목표 칸에 도달하기 전 최소로 더 도는 바퀴 수
 
+# 자동 모드: 손가락을 대고 있는 동안 알아서 한 판씩 돈다
+const AUTO_SPIN_TIME := 0.25  # 감속에 들어가기 전 도는 시간. 이게 없으면 도는 게 안 보인다
+const AUTO_REST_TIME := 0.20  # 결과를 보여주고 다음 판으로 넘어가기 전 여유
+
 # 칸에 적히는 배수 숫자
 const NUMBER_SIZE_RATIO := 0.11  # 반지름 대비 글자 크기
 const NUMBER_RADIUS_RATIO := 0.63  # 숫자를 놓을 위치 (중심에서 얼마나 바깥인지)
@@ -57,6 +61,8 @@ var _palette_step := 0
 var _transition_tween: Tween = null
 var _transition_count := 0
 var _flip_target := 1.0  # 뒤집힘 연출이 끝나야 할 scale.x. 스킵할 때 여기로 맞춘다
+var _auto_spinning := false
+var _auto_timer := 0.0
 
 
 func _ready() -> void:
@@ -77,6 +83,33 @@ func _process(delta: float) -> void:
 		number.scale.x = -1.0 if mirrored else 1.0
 
 	_animate_pulse(delta)
+	_advance_auto(delta)
+
+
+## 손가락을 대고 있는 동안 알아서 돌게 한다. 반복해서 탭할 필요가 없어진다
+func set_auto_spin(enabled: bool) -> void:
+	_auto_spinning = enabled
+	_auto_timer = 0.0
+
+
+## 자동 모드의 한 판: 돌린다 -> 감속(빨리감기) -> 결과 -> 잠깐 쉼 -> 반복
+func _advance_auto(delta: float) -> void:
+	if not _auto_spinning or is_transitioning():
+		return  # 연출 중에는 끼어들지 않는다. 연출이 끝나면 알아서 이어진다
+
+	_auto_timer -= delta
+	if _auto_timer > 0.0:
+		return
+
+	match _state:
+		State.STOPPED:
+			_start_spin()
+			_auto_timer = AUTO_SPIN_TIME
+		State.SPINNING:
+			_start_slow_down()
+			_skip_slow_down()  # 자동은 빨리감기로 진행한다. 결과는 이미 정해져 있다
+		State.SLOWING:
+			pass  # 트윈이 끝나기를 기다린다
 
 
 ## 강화 상태를 물려준다. 룰렛이 두 개라 배수는 바깥에서 공유한다
@@ -133,6 +166,8 @@ func _on_slow_down_finished() -> void:
 	if _result_index < 0:
 		push_warning("결과 없이 감속이 끝났다")
 		return
+
+	_auto_timer = AUTO_REST_TIME  # 자동 모드라면 결과를 잠깐 보여주고 다음 판으로
 
 	var mineral: String = Minerals.ORDER[_result_index]
 	spun.emit(_result_index, mineral, multiplier_of(mineral))

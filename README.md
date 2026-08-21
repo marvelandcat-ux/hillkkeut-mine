@@ -39,11 +39,23 @@ Windows 기준 실행 파일 경로 예시:
 godot --headless --import --path .
 ```
 
-## 안드로이드 빌드 (미완료)
+## 안드로이드 빌드
 
-`export_presets.cfg`와 `icon/`은 준비돼 있지만 **아직 한 번도 export를 돌려보지 않았다.**
-내보내기 템플릿·JDK 17·Android SDK가 설치된 환경에서 아래를 돌리고 오류를 잡아야 한다.
+APK가 실제로 나오는 것까지 확인했다. 빌드에 필요한 것:
+
+- Godot 내보내기 템플릿 (에디터 > 내보내기 템플릿 관리)
+- JDK 17, Android SDK (platform-tools + build-tools)
+- 디버그 키스토어
+
+Godot 에디터 설정 > 내보내기 > Android 에 SDK·JDK·키스토어 경로를 넣고:
 
 ```
 godot --headless --export-debug "Android" --path . build/hilkkeut_mine.apk
 ```
+
+주의할 점 두 가지:
+
+- `project.godot`의 `textures/vram_compression/import_etc2_astc`가 켜져 있어야 한다.
+  꺼져 있으면 "설정 오류"만 뜨고 이유를 안 알려준다.
+- Godot 프로세스가 떠 있는 상태에서 에디터 설정 파일을 손으로 고치면,
+  그 프로세스가 종료되면서 예전 값으로 덮어쓴다.
