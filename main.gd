@@ -135,9 +135,7 @@ func _on_spun(index: int, mineral: String, multiplier: int) -> void:
 	Input.vibrate_handheld(HAPTIC_MS[mineral])  # 폰이 아니면 아무 일도 일어나지 않는다
 
 	var origin := _roulette.get_wedge_rim_global(index)
-	# 색은 상수가 아니라 지금 칸에 칠해진 색을 쓴다 (팔레트가 바뀌어도 따라간다)
-	var wedge := _roulette.get_wedge(index)
-	_shards.burst(origin, mineral, _shard_reach(mineral, origin), wedge.color)
+	_shards.burst(origin, mineral, _shard_reach(mineral, origin))
 
 	_refresh_pulse()
 	_advance_palette()
