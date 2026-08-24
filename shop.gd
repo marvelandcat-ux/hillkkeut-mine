@@ -10,8 +10,9 @@ const ROW_HEIGHT := 150
 const BUY_BUTTON_SIZE := Vector2(300.0, 96.0)
 const ICON_SIZE := Vector2(90.0, 90.0)  # 줄 맨 앞의 광물 그림 크기
 
-# 줄 맨 앞에 보여줄 광물 그림 (파편과 같은 그림을 쓴다). 돌은 그림이 없어 빈 칸으로 자리만 맞춘다
+# 줄 맨 앞에 보여줄 광물 그림 (돌 외에는 파편과 같은 그림을 쓴다)
 const ICON_TEXTURES := {
+	"돌": preload("res://assets/스프라이/광물/돌.png"),
 	"철": preload("res://assets/스프라이/광물/shard_철.png"),
 	"금": preload("res://assets/스프라이/광물/shard_금.png"),
 	"다이아": preload("res://assets/스프라이/광물/shard_다이아.png"),
