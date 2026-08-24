@@ -10,6 +10,7 @@
 [ext_resource type="Texture2D" uid="uid://dplp6ujdpw6wk" path="res://assets/스프라이/로/설정로고_ui.png" id="8_gear"]
 [ext_resource type="Script" uid="uid://dngfvwsy7ng7d" path="res://carat_odometer.gd" id="9_odometer"]
 [ext_resource type="FontFile" uid="uid://umn7k0tjyxyu" path="res://fonts/noto_sans_kr.ttf" id="10_font"]
+[ext_resource type="Texture2D" path="res://assets/스프라이/돌돌림/룰렛/돌림판화살표.png" id="11_pointer"]
 
 [sub_resource type="Gradient" id="Gradient_topfade"]
 offsets = PackedFloat32Array(0, 0.55, 1)
@@ -86,8 +87,8 @@ metadata/_edit_lock_ = true
 
 [node name="Roulette" parent="." unique_id=107527597 instance=ExtResource("2_roulette")]
 
-[node name="Pointer" type="Polygon2D" parent="." unique_id=1999525170]
-polygon = PackedVector2Array(-17, -40, 17, -40, 0, 0)
+[node name="Pointer" type="Sprite2D" parent="." unique_id=1999525170]
+texture = ExtResource("11_pointer")
 
 [node name="Shards" type="Node2D" parent="." unique_id=294072904]
 script = ExtResource("3_shards")

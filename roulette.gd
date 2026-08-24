@@ -32,6 +32,23 @@ const PULSE_PEAK := Color(1.35, 1.35, 1.35)
 const DOMINO_STEP_DELAY := 0.03  # 12칸 × 0.03 = 0.36초
 const FLIP_TIME := 0.5
 
+# 룰렛 장식 스프라이트 (테두리 링 + 중심 허브)
+const RIM_TEXTURE := preload("res://assets/스프라이/돌돌림/룰렛/돌림판베어링.png")
+const HUB_TEXTURE := preload("res://assets/스프라이/돌돌림/룰렛/돌림판가운데.png")
+const RIM_OUTER_RADIUS_PX := 586.0  # 링 그림의 바깥 반지름 (원본 픽셀 기준)
+const RIM_OUTER_RATIO := 1.12  # 칸 반지름 대비 링이 바깥으로 나가는 비율
+const HUB_DIAMETER_RATIO := 0.6  # 칸 반지름 대비 허브 지름
+
+## 룰렛 몸체(링·허브·포인터)의 재질 색. 교체마다 나무→돌→철→금→다이아로 좋아지고,
+## 다이아 이후로는 다이아에 머문다. 무채색 스프라이트에 이 색을 곱해서 입힌다
+const MATERIAL_TINTS := [
+	Color("A9744F"),  # 0단계: 나무
+	Color("9C9A94"),  # 1단계: 돌
+	Color("8FA9BE"),  # 2단계: 철
+	Color("E5B85C"),  # 3단계: 금
+	Color("A8DCEC"),  # 4단계~: 다이아
+]
+
 enum State {
 	SPINNING,  # 상시 회전 중
 	SLOWING,  # 결과가 정해졌고 그 칸으로 감속하는 중
@@ -63,9 +80,20 @@ var _transition_count := 0
 var _flip_target := 1.0  # 뒤집힘 연출이 끝나야 할 scale.x. 스킵할 때 여기로 맞춘다
 var _auto_spinning := false
 var _auto_timer := 0.0
+var _rim: Sprite2D = null
+var _hub: Sprite2D = null
 
 
 func _ready() -> void:
+	# 장식은 칸보다 위에 그린다 (칸은 z 0, 링·허브는 z 1, 숫자는 z 2)
+	_rim = Sprite2D.new()
+	_rim.texture = RIM_TEXTURE
+	_rim.z_index = 1
+	add_child(_rim)
+	_hub = Sprite2D.new()
+	_hub.texture = HUB_TEXTURE
+	_hub.z_index = 1
+	add_child(_hub)
 	_build_wedges()
 
 
@@ -221,6 +249,29 @@ func _build_wedges() -> void:
 		_numbers.append(_make_number(index))
 
 	_refresh_numbers()
+	_layout_deco()
+
+
+## step 단계의 재질 색. 포인터는 메인 씬에 있어서 밖에서도 가져다 쓴다
+static func material_tint(step: int) -> Color:
+	return MATERIAL_TINTS[clampi(step, 0, MATERIAL_TINTS.size() - 1)]
+
+
+## 링과 허브를 현재 반지름에 맞춰 늘이고 현재 단계의 재질 색을 입힌다
+func _layout_deco() -> void:
+	if _rim == null:
+		return
+	_rim.scale = Vector2.ONE * (radius * RIM_OUTER_RATIO / RIM_OUTER_RADIUS_PX)
+	_hub.scale = Vector2.ONE * (radius * HUB_DIAMETER_RATIO / HUB_TEXTURE.get_width())
+	_apply_material()
+
+
+func _apply_material() -> void:
+	if _rim == null:
+		return
+	var tint := material_tint(_palette_step)
+	_rim.modulate = tint
+	_hub.modulate = tint
 
 
 ## index번 칸의 부채꼴 꼭짓점. 0번 칸의 중심이 12시를 향하도록 배치한다
@@ -241,6 +292,7 @@ func _make_number(index: int) -> Label:
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE  # 칸 판정은 각도로 하므로 라벨은 입력을 안 먹는다
+	label.z_index = 2  # 허브·링(z 1)보다 위에 그린다
 
 	var angle := UP_ANGLE + index * WEDGE_ANGLE
 	label.size = Vector2(font_size * 3.4, font_size * 1.5)
@@ -304,6 +356,7 @@ func _play_domino() -> void:
 	for index in WEDGE_COUNT:
 		_transition_tween.tween_callback(_paint_wedge.bind(index))
 		_transition_tween.tween_interval(DOMINO_STEP_DELAY)
+	_transition_tween.tween_callback(_apply_material)  # 칸이 다 물든 뒤 몸체 재질이 바뀐다
 
 
 ## 뒤집힘 — Y축으로 180도. 폭이 0이 되는 가운데에서 색을 바꿔야 교체 순간이 안 보인다
@@ -329,6 +382,7 @@ func _paint_wedge(index: int) -> void:
 func _paint_all() -> void:
 	for index in _wedges.size():
 		_paint_wedge(index)
+	_apply_material()
 
 
 ## 밖에서 칸 색을 바꾸기 위한 창구

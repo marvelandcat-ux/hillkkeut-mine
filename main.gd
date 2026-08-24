@@ -4,10 +4,8 @@ extends Node2D
 # 제스처 바에도 물렸다. 룰렛을 조금 줄이고 위로 올려 아래쪽에 자리를 만든다
 const DIAMETER_RATIO := 0.70  # 룰렛 지름 = 화면 폭 대비 비율
 const CENTER_Y_RATIO := 0.59  # 상단 1/3은 그대로 비운 채, 아래에 UI 자리를 남긴다
-const POINTER_WIDTH := 34.0
-const POINTER_HEIGHT := 40.0
-const POINTER_GAP := 8.0  # 룰렛 테두리와 포인터 끝 사이 간격
-const POINTER_COLOR := Color("F2F0EA")
+const POINTER_HEIGHT := 64.0  # 포인터 스프라이트의 화면 표시 높이
+const POINTER_GAP := 6.0  # 링 바깥과 포인터 끝 사이 간격
 
 const MAX_CARAT := 9_000_000_000_000_000_000  # 64비트 정수가 넘치기 전에 멈춘다
 
@@ -15,7 +13,7 @@ const TOP_DEAD_ZONE_RATIO := 1.0 / 3.0  # 상단 1/3은 PIP 영상에 가려지�
 
 # 룰렛 가운데를 꾹 누르고 있으면 자동으로 돈다. 반복 탭이 손가락에 부담이라서 넣었다
 const AUTO_HOLD_TIME := 0.35  # 이만큼 누르고 있으면 자동 모드로 들어간다
-const AUTO_ZONE_RATIO := 0.45  # 룰렛 반지름 대비 "가운데"로 볼 범위
+const AUTO_ZONE_RATIO := 1.12  # 룰렛 반지름 대비 꾹 누르기가 먹는 범위 (링 포함 룰렛 전체)
 
 # 결과가 나올 때 주는 미세한 진동. 등급이 높을수록 조금 길다 —
 # 화면을 안 봐도 알 수 있어야 하는 게임이라 진동도 같은 정보를 나른다
@@ -43,7 +41,7 @@ const DIM_LEVELS := {
 }
 
 @onready var _roulette: Roulette = $Roulette
-@onready var _pointer: Polygon2D = $Pointer
+@onready var _pointer: Sprite2D = $Pointer
 @onready var _carat_odometer: CaratOdometer = $UI/CaratOdometer
 @onready var _shop_button: Button = $UI/ShopButton
 @onready var _settings_button: Button = $UI/SettingsButton
@@ -64,6 +62,7 @@ var _dim_tween: Tween = null
 func _ready() -> void:
 	_setup_labels()
 	_layout()
+	_pointer.modulate = Roulette.material_tint(_palette_step)
 	get_viewport().size_changed.connect(_layout)  # 기기 해상도가 달라도 같은 비율을 유지한다
 
 	_roulette.bind_upgrades(_upgrades)
@@ -151,6 +150,7 @@ func _advance_palette() -> void:
 		return
 	_palette_step = step
 	_roulette.play_transition(step)
+	_pointer.modulate = Roulette.material_tint(step)  # 포인터도 몸체와 같은 재질을 따라간다
 	_shop.set_palette(step)  # 상점 목록의 광물 이름 색도 새 팔레트를 따라간다
 
 
@@ -232,11 +232,8 @@ func _layout() -> void:
 	var radius := screen.x * DIAMETER_RATIO / 2.0
 	_roulette.radius = radius
 	_roulette.position = Vector2(screen.x / 2.0, screen.y * CENTER_Y_RATIO)
-	# 포인터는 룰렛의 형제 노드다. 자식으로 넣으면 룰렛과 같이 돌아서 의미가 없어진다
-	_pointer.position = _roulette.position + Vector2(0.0, -radius - POINTER_GAP)
-	_pointer.polygon = PackedVector2Array([
-		Vector2(-POINTER_WIDTH / 2.0, -POINTER_HEIGHT),
-		Vector2(POINTER_WIDTH / 2.0, -POINTER_HEIGHT),
-		Vector2(0.0, 0.0),
-	])
-	_pointer.color = POINTER_COLOR
+	# 포인터는 룰렛의 형제 노드다. 자식으로 넣으면 룰렛과 같이 돌아서 의미가 없어진다.
+	# 스프라이트 원점이 가운데라서, 뾰족한 끝이 링 바깥에 오도록 절반 높이만큼 올린다
+	_pointer.scale = Vector2.ONE * (POINTER_HEIGHT / float(_pointer.texture.get_height()))
+	_pointer.position = _roulette.position \
+		+ Vector2(0.0, -radius * Roulette.RIM_OUTER_RATIO - POINTER_GAP - POINTER_HEIGHT / 2.0)
