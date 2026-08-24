@@ -2,7 +2,7 @@ extends Node2D
 
 # 기획서는 지름 82% / 중심 65%였는데, 실제 폰에서는 하단 UI가 룰렛 위로 겹치고
 # 제스처 바에도 물렸다. 룰렛을 조금 줄이고 위로 올려 아래쪽에 자리를 만든다
-const DIAMETER_RATIO := 0.76  # 룰렛 지름 = 화면 폭의 76%
+const DIAMETER_RATIO := 0.64  # 룰렛 지름 = 화면 폭 대비 비율. 너무 크면 투박해 보여서 줄였다
 const CENTER_Y_RATIO := 0.59  # 상단 1/3은 그대로 비운 채, 아래에 UI 자리를 남긴다
 const POINTER_WIDTH := 34.0
 const POINTER_HEIGHT := 40.0
