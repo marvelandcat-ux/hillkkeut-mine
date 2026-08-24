@@ -33,6 +33,8 @@ const DOMINO_STEP_DELAY := 0.03  # 12칸 × 0.03 = 0.36초
 const FLIP_TIME := 0.5
 
 # 룰렛 장식 스프라이트 (테두리 링 + 중심 허브)
+const ROLL_SOUND := preload("res://assets/소리/rollsound.mp3")  # 새 판이 돌기 시작할 때
+const LEVEL_UP_SOUND := preload("res://assets/소리/level_up_sound.mp3")  # 룰렛이 교체될 때
 const RIM_TEXTURE := preload("res://assets/스프라이/돌돌림/룰렛/돌림판베어링.png")
 const HUB_TEXTURE := preload("res://assets/스프라이/돌돌림/룰렛/돌림판가운데.png")
 const RIM_OUTER_RADIUS_PX := 586.0  # 링 그림의 바깥 반지름 (원본 픽셀 기준)
@@ -82,9 +84,19 @@ var _auto_spinning := false
 var _auto_timer := 0.0
 var _rim: Sprite2D = null
 var _hub: Sprite2D = null
+var _roll_sound: AudioStreamPlayer = null
+var _level_up_sound: AudioStreamPlayer = null
 
 
 func _ready() -> void:
+	_roll_sound = AudioStreamPlayer.new()
+	_roll_sound.stream = ROLL_SOUND
+	_roll_sound.bus = &"SFX"
+	add_child(_roll_sound)
+	_level_up_sound = AudioStreamPlayer.new()
+	_level_up_sound.stream = LEVEL_UP_SOUND
+	_level_up_sound.bus = &"SFX"
+	add_child(_level_up_sound)
 	# 장식은 칸보다 위에 그린다 (칸은 z 0, 링·허브는 z 1, 숫자는 z 2)
 	_rim = Sprite2D.new()
 	_rim.texture = RIM_TEXTURE
@@ -209,6 +221,7 @@ func _start_spin() -> void:
 	_slow_down_tween = null
 	_state = State.SPINNING
 	_result_index = -1
+	_roll_sound.play()  # 새 판 시작. 볼륨은 설정의 소리 슬라이더를 따른다
 
 
 ## index번 칸의 중심이 12시 포인터에 오는 회전각.
@@ -337,6 +350,7 @@ func play_transition(step: int) -> void:
 		_skip_transition()
 	_palette_step = step
 	_transition_count += 1
+	_level_up_sound.play()  # 교체 연출과 함께 레벨업 소리
 	if _transition_count % 2 == 1:
 		_play_domino()
 	else:

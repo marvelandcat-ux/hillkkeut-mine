@@ -10,6 +10,8 @@
 [ext_resource type="Texture2D" uid="uid://dplp6ujdpw6wk" path="res://assets/스프라이/로/설정로고_ui.png" id="8_gear"]
 [ext_resource type="Script" uid="uid://dngfvwsy7ng7d" path="res://carat_odometer.gd" id="9_odometer"]
 [ext_resource type="FontFile" uid="uid://umn7k0tjyxyu" path="res://fonts/noto_sans_kr.ttf" id="10_font"]
+[ext_resource type="AudioStream" path="res://assets/소리/background_music.mp3" id="13_bgm"]
+[ext_resource type="Script" path="res://bgm_player.gd" id="14_bgm_player"]
 [ext_resource type="Texture2D" path="res://assets/스프라이/돌돌림/룰렛/돌림판화살표.png" id="11_pointer"]
 
 [sub_resource type="Gradient" id="Gradient_topfade"]
@@ -92,6 +94,11 @@ texture = ExtResource("11_pointer")
 
 [node name="Shards" type="Node2D" parent="." unique_id=294072904]
 script = ExtResource("3_shards")
+
+[node name="Bgm" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("13_bgm")
+bus = &"BGM"
+script = ExtResource("14_bgm_player")
 
 [node name="UI" type="CanvasLayer" parent="." unique_id=1953564440]
 
