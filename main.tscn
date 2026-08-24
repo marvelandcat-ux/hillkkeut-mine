@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene load_steps=11 format=3]
 
 [ext_resource type="Script" path="res://main.gd" id="1_main"]
 [ext_resource type="PackedScene" path="res://roulette.tscn" id="2_roulette"]
@@ -8,6 +8,8 @@
 [ext_resource type="Texture2D" path="res://assets/스프라이/로/광물카트로고_ui.png" id="6_cart"]
 [ext_resource type="PackedScene" path="res://settings.tscn" id="7_settings"]
 [ext_resource type="Texture2D" path="res://assets/스프라이/로/설정로고_ui.png" id="8_gear"]
+[ext_resource type="Script" path="res://carat_odometer.gd" id="9_odometer"]
+[ext_resource type="Texture2D" path="res://assets/스프라이/돈프레임_ui.png" id="10_frame"]
 
 [node name="Main" type="Node2D"]
 script = ExtResource("1_main")
@@ -15,9 +17,19 @@ script = ExtResource("1_main")
 [node name="Background" type="CanvasLayer" parent="."]
 layer = -1
 
+[node name="BlackFill" type="ColorRect" parent="Background"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0, 0, 0, 1)
+
 [node name="WallRect" type="TextureRect" parent="Background"]
 modulate = Color(0.5, 0.5, 0.5, 1)
 anchors_preset = 15
+anchor_top = 0.333333
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
@@ -37,7 +49,25 @@ script = ExtResource("3_shards")
 
 [node name="UI" type="CanvasLayer" parent="."]
 
-[node name="CaratLabel" type="Label" parent="UI"]
+[node name="CaratFrame" type="NinePatchRect" parent="UI"]
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -240.0
+offset_top = -256.0
+offset_right = 240.0
+offset_bottom = -150.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+texture = ExtResource("10_frame")
+patch_margin_left = 34
+patch_margin_top = 34
+patch_margin_right = 34
+patch_margin_bottom = 34
+
+[node name="CaratOdometer" type="HBoxContainer" parent="UI"]
 anchors_preset = 12
 anchor_top = 1.0
 anchor_right = 1.0
@@ -46,8 +76,7 @@ offset_top = -245.0
 offset_bottom = -160.0
 grow_horizontal = 2
 grow_vertical = 0
-horizontal_alignment = 1
-vertical_alignment = 1
+script = ExtResource("9_odometer")
 
 [node name="ShopButton" type="Button" parent="UI"]
 anchor_top = 1.0

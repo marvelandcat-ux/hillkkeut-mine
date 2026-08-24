@@ -27,7 +27,6 @@ const HAPTIC_MS := {
 }
 const AUTO_START_HAPTIC_MS := 18  # 자동 모드가 켜졌다는 신호
 
-const CARAT_FONT_SIZE := 62
 const CARAT_FONT_COLOR := Color("F2F0EA")
 const SHOP_BUTTON_FONT_SIZE := 32
 
@@ -45,7 +44,7 @@ const DIM_LEVELS := {
 
 @onready var _roulette: Roulette = $Roulette
 @onready var _pointer: Polygon2D = $Pointer
-@onready var _carat_label: Label = $UI/CaratLabel
+@onready var _carat_odometer: CaratOdometer = $UI/CaratOdometer
 @onready var _shop_button: Button = $UI/ShopButton
 @onready var _settings_button: Button = $UI/SettingsButton
 @onready var _shards: Node2D = $Shards
@@ -133,7 +132,7 @@ func _stop_auto() -> void:
 
 func _on_spun(index: int, mineral: String, multiplier: int) -> void:
 	_carat = mini(_carat + multiplier, MAX_CARAT)
-	_carat_label.text = CaratFormat.to_text(_carat)
+	_carat_odometer.set_value(_carat)
 	_flash_dim(mineral)
 	GameSettings.vibrate(HAPTIC_MS[mineral])  # 설정에서 끌 수 있다. 폰이 아니면 아무 일도 일어나지 않는다
 
@@ -177,7 +176,7 @@ func _on_upgrade_requested(mineral: String) -> void:
 
 	_carat -= _upgrades.price(mineral)
 	_upgrades.upgrade(mineral)
-	_carat_label.text = CaratFormat.to_text(_carat)
+	_carat_odometer.set_value(_carat)
 	_shop.refresh(_carat)
 	_refresh_pulse()
 
@@ -224,9 +223,8 @@ func _shard_reach(mineral: String, origin: Vector2) -> float:
 
 
 func _setup_labels() -> void:
-	KoreanFont.apply(_carat_label, CARAT_FONT_SIZE, CARAT_FONT_COLOR)
 	KoreanFont.apply(_shop_button, SHOP_BUTTON_FONT_SIZE, CARAT_FONT_COLOR)
-	_carat_label.text = CaratFormat.to_text(_carat)
+	_carat_odometer.set_value(_carat, false)  # 시작값은 굴리지 않고 바로 표시
 
 
 func _layout() -> void:
