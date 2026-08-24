@@ -8,6 +8,14 @@ signal upgrade_requested(mineral: String)
 const TOP_DEAD_ZONE_RATIO := 1.0 / 3.0  # 상점에서도 상단 1/3은 비워둔다 (PIP 영상에 가려지는 영역)
 const ROW_HEIGHT := 150
 const BUY_BUTTON_SIZE := Vector2(300.0, 96.0)
+const ICON_SIZE := Vector2(90.0, 90.0)  # 줄 맨 앞의 광물 그림 크기
+
+# 줄 맨 앞에 보여줄 광물 그림 (파편과 같은 그림을 쓴다). 돌은 그림이 없어 빈 칸으로 자리만 맞춘다
+const ICON_TEXTURES := {
+	"철": preload("res://assets/스프라이/광물/shard_철.png"),
+	"금": preload("res://assets/스프라이/광물/shard_금.png"),
+	"다이아": preload("res://assets/스프라이/광물/shard_다이아.png"),
+}
 
 const TITLE_FONT_SIZE := 44
 const CARAT_FONT_SIZE := 30
@@ -75,7 +83,7 @@ func refresh(carat: int) -> void:
 		var name_label: Label = _rows[mineral]["name"]
 		var buy_button: Button = _rows[mineral]["button"]
 
-		name_label.text = "%s ×%d" % [mineral, _upgrades.multiplier(mineral)]
+		name_label.text = "×%d %s" % [_upgrades.multiplier(mineral), mineral]
 		# 이름 색은 그 광물의 현재 색이다. 목록에서도 색 온도 순서가 그대로 보인다
 		name_label.add_theme_color_override("font_color", Minerals.color(mineral, _palette_step))
 
@@ -117,6 +125,16 @@ func _build_rows() -> void:
 		var line := HBoxContainer.new()
 		line.add_theme_constant_override("separation", 20)
 		row.add_child(line)
+
+		# 그림이 글보다 앞에 온다. 곁눈으로도 어느 광물 줄인지 보이게
+		var icon := TextureRect.new()
+		icon.custom_minimum_size = ICON_SIZE
+		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		if ICON_TEXTURES.has(mineral):
+			icon.texture = ICON_TEXTURES[mineral]
+		line.add_child(icon)
 
 		var name_label := Label.new()
 		name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
