@@ -1,23 +1,44 @@
-[gd_scene load_steps=11 format=3]
+[gd_scene format=3 uid="uid://chige0m08lu6o"]
 
-[ext_resource type="Script" path="res://main.gd" id="1_main"]
+[ext_resource type="Script" uid="uid://qox1ogjvt82q" path="res://main.gd" id="1_main"]
 [ext_resource type="PackedScene" path="res://roulette.tscn" id="2_roulette"]
-[ext_resource type="Script" path="res://shards.gd" id="3_shards"]
+[ext_resource type="Script" uid="uid://cj2qppn3s1ftw" path="res://shards.gd" id="3_shards"]
 [ext_resource type="PackedScene" path="res://shop.tscn" id="4_shop"]
-[ext_resource type="Texture2D" path="res://assets/스프라이/돌벽.png" id="5_wall"]
-[ext_resource type="Texture2D" path="res://assets/스프라이/로/광물카트로고_ui.png" id="6_cart"]
+[ext_resource type="Texture2D" uid="uid://dute62gfd05ru" path="res://assets/스프라이/돌벽.png" id="5_wall"]
+[ext_resource type="Texture2D" uid="uid://dtj6ljampe1aj" path="res://assets/스프라이/로/광물카트로고_ui.png" id="6_cart"]
 [ext_resource type="PackedScene" path="res://settings.tscn" id="7_settings"]
-[ext_resource type="Texture2D" path="res://assets/스프라이/로/설정로고_ui.png" id="8_gear"]
-[ext_resource type="Script" path="res://carat_odometer.gd" id="9_odometer"]
-[ext_resource type="Texture2D" path="res://assets/스프라이/돈프레임_ui.png" id="10_frame"]
+[ext_resource type="Texture2D" uid="uid://dplp6ujdpw6wk" path="res://assets/스프라이/로/설정로고_ui.png" id="8_gear"]
+[ext_resource type="Script" uid="uid://dngfvwsy7ng7d" path="res://carat_odometer.gd" id="9_odometer"]
 
-[node name="Main" type="Node2D"]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_button"]
+content_margin_left = 14.0
+content_margin_top = 14.0
+content_margin_right = 14.0
+content_margin_bottom = 14.0
+bg_color = Color(0.32, 0.32, 0.31, 0.9)
+corner_radius_top_left = 20
+corner_radius_top_right = 20
+corner_radius_bottom_right = 20
+corner_radius_bottom_left = 20
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_button_pressed"]
+content_margin_left = 14.0
+content_margin_top = 14.0
+content_margin_right = 14.0
+content_margin_bottom = 14.0
+bg_color = Color(0.22, 0.22, 0.21, 0.9)
+corner_radius_top_left = 20
+corner_radius_top_right = 20
+corner_radius_bottom_right = 20
+corner_radius_bottom_left = 20
+
+[node name="Main" type="Node2D" unique_id=767402912]
 script = ExtResource("1_main")
 
-[node name="Background" type="CanvasLayer" parent="."]
+[node name="Background" type="CanvasLayer" parent="." unique_id=1097948007]
 layer = -1
 
-[node name="BlackFill" type="ColorRect" parent="Background"]
+[node name="BlackFill" type="ColorRect" parent="Background" unique_id=1244620301]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -25,10 +46,11 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 color = Color(0, 0, 0, 1)
+metadata/_edit_lock_ = true
 
-[node name="WallRect" type="TextureRect" parent="Background"]
+[node name="WallRect" type="TextureRect" parent="Background" unique_id=1749042381]
 modulate = Color(0.5, 0.5, 0.5, 1)
-anchors_preset = 15
+anchors_preset = -1
 anchor_top = 0.333333
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -38,36 +60,19 @@ mouse_filter = 2
 texture = ExtResource("5_wall")
 expand_mode = 1
 stretch_mode = 6
+metadata/_edit_lock_ = true
 
-[node name="Roulette" parent="." instance=ExtResource("2_roulette")]
+[node name="Roulette" parent="." unique_id=107527597 instance=ExtResource("2_roulette")]
 
-[node name="Pointer" type="Polygon2D" parent="."]
+[node name="Pointer" type="Polygon2D" parent="." unique_id=1999525170]
 polygon = PackedVector2Array(-17, -40, 17, -40, 0, 0)
 
-[node name="Shards" type="Node2D" parent="."]
+[node name="Shards" type="Node2D" parent="." unique_id=294072904]
 script = ExtResource("3_shards")
 
-[node name="UI" type="CanvasLayer" parent="."]
+[node name="UI" type="CanvasLayer" parent="." unique_id=1953564440]
 
-[node name="CaratFrame" type="NinePatchRect" parent="UI"]
-anchor_left = 0.5
-anchor_top = 1.0
-anchor_right = 0.5
-anchor_bottom = 1.0
-offset_left = -240.0
-offset_top = -256.0
-offset_right = 240.0
-offset_bottom = -150.0
-grow_horizontal = 2
-grow_vertical = 0
-mouse_filter = 2
-texture = ExtResource("10_frame")
-patch_margin_left = 34
-patch_margin_top = 34
-patch_margin_right = 34
-patch_margin_bottom = 34
-
-[node name="CaratOdometer" type="HBoxContainer" parent="UI"]
+[node name="CaratOdometer" type="HBoxContainer" parent="UI" unique_id=944632239]
 anchors_preset = 12
 anchor_top = 1.0
 anchor_right = 1.0
@@ -78,43 +83,53 @@ grow_horizontal = 2
 grow_vertical = 0
 script = ExtResource("9_odometer")
 
-[node name="ShopButton" type="Button" parent="UI"]
+[node name="ShopButton" type="Button" parent="UI" unique_id=1139684355]
+anchors_preset = 2
 anchor_top = 1.0
 anchor_bottom = 1.0
-offset_left = 40.0
-offset_top = -175.0
-offset_right = 190.0
-offset_bottom = -55.0
+offset_left = 20.0
+offset_top = -159.0
+offset_right = 170.0
+offset_bottom = -39.0
 grow_vertical = 0
 icon = ExtResource("6_cart")
-flat = true
 icon_alignment = 1
 expand_icon = true
+theme_override_styles/focus = SubResource("StyleBoxFlat_button")
+theme_override_styles/normal = SubResource("StyleBoxFlat_button")
+theme_override_styles/hover = SubResource("StyleBoxFlat_button")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
 
-[node name="SettingsButton" type="Button" parent="UI"]
+[node name="SettingsButton" type="Button" parent="UI" unique_id=1560989082]
+anchors_preset = 3
 anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -190.0
-offset_top = -175.0
-offset_right = -40.0
-offset_bottom = -55.0
+offset_left = -174.0
+offset_top = -152.0
+offset_right = -34.0
+offset_bottom = -42.0
 grow_horizontal = 0
 grow_vertical = 0
 icon = ExtResource("8_gear")
-flat = true
 icon_alignment = 1
 expand_icon = true
+theme_override_styles/focus = SubResource("StyleBoxFlat_button")
+theme_override_styles/normal = SubResource("StyleBoxFlat_button")
+theme_override_styles/hover = SubResource("StyleBoxFlat_button")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
 
-[node name="Shop" parent="." instance=ExtResource("4_shop")]
+[node name="Shop" parent="." unique_id=1557967028 instance=ExtResource("4_shop")]
+visible = false
 
-[node name="Settings" parent="." instance=ExtResource("7_settings")]
+[node name="Settings" parent="." unique_id=882895038 instance=ExtResource("7_settings")]
+visible = false
 
-[node name="Dim" type="CanvasLayer" parent="."]
+[node name="Dim" type="CanvasLayer" parent="." unique_id=1427725642]
 layer = 10
 
-[node name="DimRect" type="ColorRect" parent="Dim"]
+[node name="DimRect" type="ColorRect" parent="Dim" unique_id=1162599240]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -122,3 +137,4 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 color = Color(0, 0, 0, 0.15)
+metadata/_edit_lock_ = true
