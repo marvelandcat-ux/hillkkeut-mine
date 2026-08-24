@@ -9,6 +9,11 @@ const TOP_DEAD_ZONE_RATIO := 1.0 / 3.0  # 설정에서도 상단 1/3은 비워�
 const ROW_HEIGHT := 150
 const NAME_BUTTON_SIZE := Vector2(240.0, 96.0)
 const SLIDER_MAX := 100.0
+const DEFAULT_RESTORE := 50.0  # 0인 상태에서 끔을 풀면 돌아가는 위치 (50%)
+
+const BGM_ICON := preload("res://assets/스프라이/배경음악로고_ui.png")
+const SFX_ICON := preload("res://assets/스프라이/소리로고_ui.png")
+const OFF_ICON := preload("res://assets/스프라이/끔로고-Photoroom.png")  # 음소거 때 로고 위에 겹치는 빨간 금지 표시
 const VIBRATION_CONFIRM_MS := 30  # 진동을 다시 켰을 때 손끝으로 바로 확인시켜주는 진동
 
 const TITLE_FONT_SIZE := 44
@@ -54,13 +59,15 @@ func _layout_top_gap() -> void:
 
 
 func _build_rows() -> void:
-	_add_volume_row("배경음악", GameSettings.bgm_volume, GameSettings.set_bgm_volume)
-	_add_volume_row("소리", GameSettings.sfx_volume, GameSettings.set_sfx_volume)
+	_add_volume_row(BGM_ICON, GameSettings.bgm_volume, GameSettings.set_bgm_volume)
+	_add_volume_row(SFX_ICON, GameSettings.sfx_volume, GameSettings.set_sfx_volume)
 	_add_vibration_row()
 
 
-## 이름 버튼 + 슬라이더 한 줄. 이름 버튼을 누르면 슬라이더가 0으로 떨어진다
-func _add_volume_row(row_name: String, initial: float, setter: Callable) -> void:
+## 로고 버튼 + 슬라이더 한 줄.
+## 로고를 누르면 0(음소거)이 되고 위에 끔 표시가 뜬다.
+## 다시 누르면 끄기 전 위치로 돌아오고, 0인 상태에서 껐던 거라면 50%로 돌아온다
+func _add_volume_row(icon: Texture2D, initial: float, setter: Callable) -> void:
 	var line := _new_row_line()
 
 	var slider := HSlider.new()
@@ -70,14 +77,49 @@ func _add_volume_row(row_name: String, initial: float, setter: Callable) -> void
 	slider.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	slider.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	slider.custom_minimum_size.y = 64.0
-	# 슬라이더가 바뀌면 즉시 적용된다. 로고 버튼의 "바로 0"도 이 경로를 그대로 탄다
-	slider.value_changed.connect(func(value: float) -> void: setter.call(value / SLIDER_MAX))
 
-	var name_button := _new_name_button(row_name)
-	name_button.pressed.connect(func() -> void: slider.value = 0.0)
+	var button := _new_icon_button(icon)
 
-	line.add_child(name_button)
+	# 음소거 상태일 때 로고 위에 겹쳐 뜨는 끔 표시
+	var off_mark := TextureRect.new()
+	off_mark.texture = OFF_ICON
+	off_mark.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	off_mark.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	off_mark.set_anchors_preset(Control.PRESET_FULL_RECT)
+	off_mark.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	off_mark.visible = initial <= 0.0
+	button.add_child(off_mark)
+
+	# 끄기 직전 위치를 기억해뒀다가 다시 누르면 거기로 돌아간다
+	var memory := {"last": DEFAULT_RESTORE}
+	button.pressed.connect(func() -> void:
+		if slider.value > 0.0:
+			memory["last"] = slider.value
+			slider.value = 0.0
+		else:
+			slider.value = memory["last"]
+	)
+
+	# 슬라이더가 바뀌면 즉시 적용된다. 손으로 0까지 내려도 끔 표시가 뜬다
+	slider.value_changed.connect(func(value: float) -> void:
+		setter.call(value / SLIDER_MAX)
+		off_mark.visible = value <= 0.0
+	)
+
+	line.add_child(button)
 	line.add_child(slider)
+
+
+## 로고만 있는 버튼 (볼륨 줄의 음소거 토글용)
+func _new_icon_button(icon: Texture2D) -> Button:
+	var button := Button.new()
+	button.icon = icon
+	button.expand_icon = true
+	button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	button.custom_minimum_size = NAME_BUTTON_SIZE
+	button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	_paint_button(button, NAME_BUTTON_COLOR, TEXT_COLOR)
+	return button
 
 
 func _add_vibration_row() -> void:

@@ -3,13 +3,15 @@ extends Node
 ## 게임 설정 저장소 (autoload).
 ## 볼륨은 오디오 버스(BGM/SFX)에 바로 적용된다 — 나중에 소리를 넣을 때
 ## AudioStreamPlayer의 bus를 "BGM"/"SFX"로 지정하기만 하면 슬라이더가 그대로 먹는다.
-## 값은 user://settings.cfg에 저장되어 앱을 껐다 켜도 유지된다.
+## 진동 설정만 user://settings.cfg에 저장된다.
+## 볼륨은 저장하지 않는다 — 게임을 켤 때마다 배경음악·소리 모두 50%에서 시작한다.
 
 const SAVE_PATH := "user://settings.cfg"
 const MUTE_THRESHOLD := 0.001  # 이 밑이면 사실상 0으로 보고 버스를 뮤트한다
+const START_VOLUME := 0.5  # 시작 볼륨 50%
 
-var bgm_volume := 1.0  # 0.0 ~ 1.0
-var sfx_volume := 1.0  # 0.0 ~ 1.0
+var bgm_volume := START_VOLUME  # 0.0 ~ 1.0
+var sfx_volume := START_VOLUME  # 0.0 ~ 1.0
 var vibration_on := true
 
 
@@ -61,8 +63,6 @@ func _apply_bus(bus_name: String, volume: float) -> void:
 
 func _save() -> void:
 	var config := ConfigFile.new()
-	config.set_value("audio", "bgm", bgm_volume)
-	config.set_value("audio", "sfx", sfx_volume)
 	config.set_value("haptic", "vibration", vibration_on)
 	config.save(SAVE_PATH)
 
@@ -71,6 +71,4 @@ func _load() -> void:
 	var config := ConfigFile.new()
 	if config.load(SAVE_PATH) != OK:
 		return  # 저장 파일이 없으면 기본값 그대로
-	bgm_volume = config.get_value("audio", "bgm", 1.0)
-	sfx_volume = config.get_value("audio", "sfx", 1.0)
 	vibration_on = config.get_value("haptic", "vibration", true)
