@@ -1,0 +1,42 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://settings.gd" id="1_settings"]
+
+[node name="Settings" type="CanvasLayer"]
+layer = 6
+script = ExtResource("1_settings")
+
+[node name="Backdrop" type="ColorRect" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.05, 0.05, 0.06, 1)
+
+[node name="Layout" type="VBoxContainer" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 36.0
+offset_right = -36.0
+offset_bottom = -70.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 16
+
+[node name="TopSpacer" type="Control" parent="Layout"]
+
+[node name="Title" type="Label" parent="Layout"]
+text = "설정"
+horizontal_alignment = 1
+
+[node name="Rows" type="VBoxContainer" parent="Layout"]
+theme_override_constants/separation = 18
+
+[node name="BottomSpacer" type="Control" parent="Layout"]
+size_flags_vertical = 3
+
+[node name="CloseButton" type="Button" parent="Layout"]
+custom_minimum_size = Vector2(0, 84)
+text = "닫기"

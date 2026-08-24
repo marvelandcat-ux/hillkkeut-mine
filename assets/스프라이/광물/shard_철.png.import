@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bjc0bu5vgkrjq"
-path="res://.godot/imported/shard_금.png-50a66606db692f74dbac5c8ffc04e84c.ctex"
+uid="uid://cepcd6uoevbf0"
+path="res://.godot/imported/shard_철.png-06d06408825d95f35cd2f7b93b702edf.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/shard_금.png"
-dest_files=["res://.godot/imported/shard_금.png-50a66606db692f74dbac5c8ffc04e84c.ctex"]
+source_file="res://assets/스프라이/광물/shard_철.png"
+dest_files=["res://.godot/imported/shard_철.png-06d06408825d95f35cd2f7b93b702edf.ctex"]
 
 [params]
 

@@ -2,7 +2,7 @@ class_name Shard
 extends Sprite2D
 
 ## 결과로 튀는 파편 한 조각.
-## 광물 그림을 그대로 쓴다 (assets/shard_*.png는 원본 사진의 흰 배경을 지운 것).
+## 광물 그림을 그대로 쓴다 (shard_*.png는 원본 사진의 흰 배경을 지운 것).
 
 const GRAVITY := 900.0  # 떨어지는 가속도. 도달 거리를 역산할 때도 이 값을 쓴다
 const SPIN_RANGE := 3.0  # 조각이 도는 속도 범위. 그림이 세밀해서 너무 빨리 돌면 지저분하다
@@ -10,9 +10,9 @@ const FADE_TAIL_RATIO := 0.35  # 수명의 마지막 35%만 페이드아웃에 �
 const SIZE_JITTER := Vector2(0.82, 1.18)  # 조각마다 크기를 조금씩 흩는다
 
 const TEXTURES := {
-	"철": preload("res://assets/shard_철.png"),
-	"금": preload("res://assets/shard_금.png"),
-	"다이아": preload("res://assets/shard_다이아.png"),
+	"철": preload("res://assets/스프라이/광물/shard_철.png"),
+	"금": preload("res://assets/스프라이/광물/shard_금.png"),
+	"다이아": preload("res://assets/스프라이/광물/shard_다이아.png"),
 }
 
 var _velocity := Vector2.ZERO

@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://deri478bulald"
-path="res://.godot/imported/shard_다이아.png-12ff53a5319066840c72060256dd85e9.ctex"
+uid="uid://dtj6ljampe1aj"
+path="res://.godot/imported/광물카트로고_ui.png-390a5328eed232f8dbdd704b3747b444.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/shard_다이아.png"
-dest_files=["res://.godot/imported/shard_다이아.png-12ff53a5319066840c72060256dd85e9.ctex"]
+source_file="res://assets/스프라이/로/광물카트로고_ui.png"
+dest_files=["res://.godot/imported/광물카트로고_ui.png-390a5328eed232f8dbdd704b3747b444.ctex"]
 
 [params]
 

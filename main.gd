@@ -47,9 +47,11 @@ const DIM_LEVELS := {
 @onready var _pointer: Polygon2D = $Pointer
 @onready var _carat_label: Label = $UI/CaratLabel
 @onready var _shop_button: Button = $UI/ShopButton
+@onready var _settings_button: Button = $UI/SettingsButton
 @onready var _shards: Node2D = $Shards
 @onready var _dim: ColorRect = $Dim/DimRect
 @onready var _shop: CanvasLayer = $Shop
+@onready var _settings: CanvasLayer = $Settings
 
 var _carat := 0
 var _holding_center := false
@@ -71,6 +73,7 @@ func _ready() -> void:
 	_shop.setup(_upgrades)
 	_shop.upgrade_requested.connect(_on_upgrade_requested)
 	_shop_button.pressed.connect(_open_shop)
+	_settings_button.pressed.connect(_open_settings)
 	_refresh_pulse()
 
 
@@ -120,7 +123,7 @@ func _process(delta: float) -> void:
 func _start_auto() -> void:
 	_auto_spinning = true
 	_roulette.set_auto_spin(true)
-	Input.vibrate_handheld(AUTO_START_HAPTIC_MS)
+	GameSettings.vibrate(AUTO_START_HAPTIC_MS)
 
 
 func _stop_auto() -> void:
@@ -132,7 +135,7 @@ func _on_spun(index: int, mineral: String, multiplier: int) -> void:
 	_carat = mini(_carat + multiplier, MAX_CARAT)
 	_carat_label.text = CaratFormat.to_text(_carat)
 	_flash_dim(mineral)
-	Input.vibrate_handheld(HAPTIC_MS[mineral])  # 폰이 아니면 아무 일도 일어나지 않는다
+	GameSettings.vibrate(HAPTIC_MS[mineral])  # 설정에서 끌 수 있다. 폰이 아니면 아무 일도 일어나지 않는다
 
 	var origin := _roulette.get_wedge_rim_global(index)
 	_shards.burst(origin, mineral, _shard_reach(mineral, origin))
@@ -157,6 +160,13 @@ func _open_shop() -> void:
 		_stop_auto()  # 상점을 여는 동안까지 돌아갈 이유가 없다
 	_holding_center = false
 	_shop.open(_carat)
+
+
+func _open_settings() -> void:
+	if _auto_spinning:
+		_stop_auto()  # 설정을 보는 동안까지 돌아갈 이유가 없다
+	_holding_center = false
+	_settings.open()
 
 
 ## 강화 판정. 돈과 순서 잠금은 여기서만 본다 (상점은 어느 항목을 눌렀는지만 알려준다)

@@ -1,12 +1,31 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=9 format=3]
 
 [ext_resource type="Script" path="res://main.gd" id="1_main"]
 [ext_resource type="PackedScene" path="res://roulette.tscn" id="2_roulette"]
 [ext_resource type="Script" path="res://shards.gd" id="3_shards"]
 [ext_resource type="PackedScene" path="res://shop.tscn" id="4_shop"]
+[ext_resource type="Texture2D" path="res://assets/스프라이/돌벽.png" id="5_wall"]
+[ext_resource type="Texture2D" path="res://assets/스프라이/로/광물카트로고_ui.png" id="6_cart"]
+[ext_resource type="PackedScene" path="res://settings.tscn" id="7_settings"]
+[ext_resource type="Texture2D" path="res://assets/스프라이/로/설정로고_ui.png" id="8_gear"]
 
 [node name="Main" type="Node2D"]
 script = ExtResource("1_main")
+
+[node name="Background" type="CanvasLayer" parent="."]
+layer = -1
+
+[node name="WallRect" type="TextureRect" parent="Background"]
+modulate = Color(0.5, 0.5, 0.5, 1)
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("5_wall")
+expand_mode = 1
+stretch_mode = 6
 
 [node name="Roulette" parent="." instance=ExtResource("2_roulette")]
 
@@ -31,19 +50,37 @@ horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="ShopButton" type="Button" parent="UI"]
-anchor_left = 0.5
 anchor_top = 1.0
-anchor_right = 0.5
 anchor_bottom = 1.0
-offset_left = -100.0
-offset_top = -150.0
-offset_right = 100.0
-offset_bottom = -70.0
-grow_horizontal = 2
+offset_left = 40.0
+offset_top = -175.0
+offset_right = 190.0
+offset_bottom = -55.0
 grow_vertical = 0
-text = "상점"
+icon = ExtResource("6_cart")
+flat = true
+icon_alignment = 1
+expand_icon = true
+
+[node name="SettingsButton" type="Button" parent="UI"]
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -190.0
+offset_top = -175.0
+offset_right = -40.0
+offset_bottom = -55.0
+grow_horizontal = 0
+grow_vertical = 0
+icon = ExtResource("8_gear")
+flat = true
+icon_alignment = 1
+expand_icon = true
 
 [node name="Shop" parent="." instance=ExtResource("4_shop")]
+
+[node name="Settings" parent="." instance=ExtResource("7_settings")]
 
 [node name="Dim" type="CanvasLayer" parent="."]
 layer = 10
