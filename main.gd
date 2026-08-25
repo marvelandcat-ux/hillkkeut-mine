@@ -33,19 +33,16 @@ const SHOP_BUTTON_FONT_SIZE := 32
 # 화면이 통째로 깜빡이면 영상 시청에 방해가 되고, 뭐가 걸렸는지도 안 읽힌다
 const REST_DIM_ALPHA := 0.15
 
-# 룰렛은 평소 어둡게 눌러두고, 좋은 게 걸린 순간에만 밝아진다.
-# 밝아지는 건 결과와 붙어야 하니 빠르게, 어둠으로 돌아오는 건 느리게
-const ROULETTE_REST_TINT := 0.72
+# 룰렛 평소 밝기. 눌러두지 않는다 — 어두울 때와 밝을 때 차이가 크면 눈에 피로하다
+const ROULETTE_REST_TINT := 1.0
+# 밝아지는 건 결과와 붙어야 하니 빠르게, 돌아오는 건 느리게
 const FLASH_IN_TIME := 0.06
 const FLASH_RECOVER_TIME := 0.30
-# 등급이 올라갈수록 더 밝고 더 오래 간다. 이게 안 보고도 읽는 첫 번째 단서다.
-# tint 0은 "변화 없음" — 돌은 절반이나 나와서 반짝이면 신호가 아니라 소음이 된다
-const FLASH_LEVELS := {
-	"돌": {"tint": 0.0, "hold": 0.0},
-	"철": {"tint": 1.15, "hold": 0.3},
-	"금": {"tint": 1.55, "hold": 0.3},
-	"다이아": {"tint": 2.00, "hold": 1.0},
-}
+# 반짝이는 건 금·다이아뿐이다. 등급마다 세기를 달리하면 차이를 읽느라 화면을 보게 되고,
+# 돌·철은 자주 나와서 반짝이면 신호가 아니라 소음이 된다
+const FLASH_MINERALS := ["금", "다이아"]
+const FLASH_TINT := 1.3
+const FLASH_HOLD := 0.3
 
 @onready var _roulette: Roulette = $Roulette
 @onready var _pointer: Sprite2D = $Pointer
@@ -203,16 +200,14 @@ func _refresh_pulse() -> void:
 ## 그걸 건드리면 위에 떠 있는 유튜브 PIP 영상까지 같이 어두워진다.
 ## 화면 전체가 아니라 룰렛만 밝힌다 — 빛나는 자리가 곧 결과가 나온 자리다
 func _flash_roulette(mineral: String) -> void:
-	var level: Dictionary = FLASH_LEVELS[mineral]
-	var peak: float = level["tint"]
-	if peak <= 0.0:
-		return  # 돌은 변화 없음
+	if not mineral in FLASH_MINERALS:
+		return
 
 	if _flash_tween != null and _flash_tween.is_valid():
 		_flash_tween.kill()
 	_flash_tween = create_tween()
-	_flash_tween.tween_property(_roulette, "modulate", _gray(peak), FLASH_IN_TIME)
-	_flash_tween.tween_interval(level["hold"])
+	_flash_tween.tween_property(_roulette, "modulate", _gray(FLASH_TINT), FLASH_IN_TIME)
+	_flash_tween.tween_interval(FLASH_HOLD)
 	_flash_tween.tween_property(_roulette, "modulate", _gray(ROULETTE_REST_TINT), FLASH_RECOVER_TIME)
 
 
