@@ -7,8 +7,11 @@ signal changed
 
 const PRICE_UNIT := 3
 
-## 배수 상한. 이걸 넘기면 캐럿이 64비트 정수 범위를 벗어나 값이 망가진다
-const MAX_MULTIPLIER := 1 << 50
+## 배수 상한 (약 14경). 임의 제한이 아니라 64비트 정수가 터지기 직전의 안전선이다:
+## - 캐럿 상한(9e18) + 배수(1.4e17)가 int64 최대(9.22e18)를 안 넘어야 하고
+## - 가격(3 × 6칸 × 배수 = 2.6e18)도 범위 안이어야 한다
+## 이보다 더 올리려면 캐럿을 정수 대신 큰 수 체계로 바꾸는 큰 공사가 필요하다
+const MAX_MULTIPLIER := 1 << 57
 
 var _multipliers := Minerals.BASE_MULTIPLIERS.duplicate()
 

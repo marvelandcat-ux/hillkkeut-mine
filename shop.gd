@@ -84,7 +84,8 @@ func refresh(carat: int) -> void:
 		var name_label: Label = _rows[mineral]["name"]
 		var buy_button: Button = _rows[mineral]["button"]
 
-		name_label.text = "×%d %s" % [_upgrades.multiplier(mineral), mineral]
+		# 배수도 계속 커지므로 압축 표기를 쓴다 (×1.2만 다이아)
+		name_label.text = "×%s %s" % [CaratFormat.to_number_text(_upgrades.multiplier(mineral)), mineral]
 		# 이름 색은 그 광물의 현재 색이다. 목록에서도 색 온도 순서가 그대로 보인다
 		name_label.add_theme_color_override("font_color", Minerals.color(mineral, _palette_step))
 
@@ -103,7 +104,7 @@ func refresh(carat: int) -> void:
 
 		var price: int = _upgrades.price(mineral)
 		var affordable: bool = carat >= price
-		buy_button.text = CaratFormat.to_text(price)
+		buy_button.text = CaratFormat.to_number_text(price)  # "캐럿"까지 붙이면 버튼이 넘친다
 		buy_button.disabled = not affordable
 		if affordable:
 			_paint_button(buy_button, BUY_READY_COLOR, TEXT_COLOR)

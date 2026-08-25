@@ -31,7 +31,8 @@ static func swap_step(amount: int) -> int:
 	return str(amount).length() - str(SWAP_START).length() + 1
 
 
-## "1,234" / "1.23 만" / "5,678 만" 처럼 단위까지 붙인 숫자 부분
+## "1,234" / "1.2만" / "5,678만" 처럼 단위까지 붙인 숫자 부분.
+## 소수는 한 자리만, 단위는 붙여 써서 상점 버튼같이 좁은 곳에서도 안 넘친다
 static func to_number_text(amount: int) -> String:
 	var index := unit_index(amount)
 	if index == 0:
@@ -41,14 +42,12 @@ static func to_number_text(amount: int) -> String:
 
 	# 반올림하면 가진 것보다 많아 보이고 9999.9가 10,000으로 튀어 자릿수가 넘친다. 그래서 버린다
 	var number := ""
-	if mantissa < 10.0:
-		number = "%.2f" % _floor_to(mantissa, 2)  # 1.23
-	elif mantissa < 100.0:
-		number = "%.1f" % _floor_to(mantissa, 1)  # 12.3
+	if mantissa < 100.0:
+		number = "%.1f" % _floor_to(mantissa, 1)  # 1.2 / 12.3
 	else:
 		number = _with_commas(int(mantissa))  # 5,678
 
-	return "%s %s" % [number, UNIT_NAMES[index]]
+	return "%s%s" % [number, UNIT_NAMES[index]]
 
 
 ## 소수점 아래 digits자리까지 남기고 버림

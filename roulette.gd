@@ -318,7 +318,8 @@ func _make_number(index: int) -> Label:
 
 func _refresh_numbers() -> void:
 	for index in _numbers.size():
-		_numbers[index].text = "×%d" % multiplier_of(Minerals.ORDER[index])
+		# 칸은 좁아서 배수가 커지면 압축 표기가 필수다 (×1.2만)
+		_numbers[index].text = "×%s" % CaratFormat.to_number_text(multiplier_of(Minerals.ORDER[index]))
 
 
 ## 강화할 수 있게 된 광물들. 여기 담긴 칸만 맥동한다 (뱃지·팝업 대신 쓰는 유일한 신호)
