@@ -29,16 +29,22 @@ const AUTO_START_HAPTIC_MS := 50  # 자동 모드가 켜졌다는 신호
 const CARAT_FONT_COLOR := Color("F2F0EA")
 const SHOP_BUTTON_FONT_SIZE := 32
 
-# 평상시에도 화면을 살짝 덮어둔다. 이 여유분이 있어야 "밝아지는" 연출이 가능하다
+# 화면 전체를 덮는 어둠막. 이 값은 절대 움직이지 않는다 —
+# 화면이 통째로 깜빡이면 영상 시청에 방해가 되고, 뭐가 걸렸는지도 안 읽힌다
 const REST_DIM_ALPHA := 0.15
-const DIM_IN_TIME := 0.06  # 밝아지는 건 빠르게 (결과가 나온 순간과 붙어야 한다)
-const DIM_RECOVER_TIME := 0.30  # 되돌아오는 건 느리게
-# 등급이 올라갈수록 더 밝아지고 더 오래 간다. 이게 안 보고도 읽는 첫 번째 단서다
-const DIM_LEVELS := {
-	"돌": {"alpha": 0.15, "hold": 0.0},
-	"철": {"alpha": 0.10, "hold": 0.3},
-	"금": {"alpha": 0.00, "hold": 0.3},
-	"다이아": {"alpha": 0.00, "hold": 1.0},
+
+# 룰렛은 평소 어둡게 눌러두고, 좋은 게 걸린 순간에만 밝아진다.
+# 밝아지는 건 결과와 붙어야 하니 빠르게, 어둠으로 돌아오는 건 느리게
+const ROULETTE_REST_TINT := 0.72
+const FLASH_IN_TIME := 0.06
+const FLASH_RECOVER_TIME := 0.30
+# 등급이 올라갈수록 더 밝고 더 오래 간다. 이게 안 보고도 읽는 첫 번째 단서다.
+# tint 0은 "변화 없음" — 돌은 절반이나 나와서 반짝이면 신호가 아니라 소음이 된다
+const FLASH_LEVELS := {
+	"돌": {"tint": 0.0, "hold": 0.0},
+	"철": {"tint": 1.15, "hold": 0.3},
+	"금": {"tint": 1.55, "hold": 0.3},
+	"다이아": {"tint": 2.00, "hold": 1.0},
 }
 
 @onready var _roulette: Roulette = $Roulette
@@ -57,13 +63,15 @@ var _hold_time := 0.0
 var _auto_spinning := false
 var _palette_step := 0  # 지금까지 도달한 교체 단계. 여기서 올라갈 때만 룰렛을 교체한다
 var _upgrades := Upgrades.new()
-var _dim_tween: Tween = null
+var _flash_tween: Tween = null
 
 
 func _ready() -> void:
 	_setup_labels()
 	_layout()
 	_pointer.modulate = Roulette.material_tint(_palette_step)
+	_dim.color.a = REST_DIM_ALPHA  # 여기서 한 번 정해두고 이후로 건드리지 않는다
+	_roulette.modulate = _gray(ROULETTE_REST_TINT)
 	get_viewport().size_changed.connect(_layout)  # 기기 해상도가 달라도 같은 비율을 유지한다
 
 	_roulette.bind_upgrades(_upgrades)
@@ -133,7 +141,7 @@ func _stop_auto() -> void:
 func _on_spun(index: int, mineral: String, multiplier: int) -> void:
 	_carat = mini(_carat + multiplier, MAX_CARAT)
 	_carat_odometer.set_value(_carat)
-	_flash_dim(mineral)
+	_flash_roulette(mineral)
 	GameSettings.vibrate(HAPTIC_MS[mineral])  # 설정에서 끌 수 있다. 폰이 아니면 아무 일도 일어나지 않는다
 
 	var origin := _roulette.get_wedge_rim_global(index)
@@ -192,19 +200,25 @@ func _refresh_pulse() -> void:
 
 
 ## ★시스템 밝기 API를 쓰지 않는다★
-## 그걸 건드리면 위에 떠 있는 유튜브 PIP 영상까지 같이 어두워진다. 오버레이로만 한다
-func _flash_dim(mineral: String) -> void:
-	var level: Dictionary = DIM_LEVELS[mineral]
-	var target: float = clampf(level["alpha"], 0.0, REST_DIM_ALPHA)  # 밝아지되 0 밑으로는 안 간다
-	if is_equal_approx(target, REST_DIM_ALPHA):
+## 그걸 건드리면 위에 떠 있는 유튜브 PIP 영상까지 같이 어두워진다.
+## 화면 전체가 아니라 룰렛만 밝힌다 — 빛나는 자리가 곧 결과가 나온 자리다
+func _flash_roulette(mineral: String) -> void:
+	var level: Dictionary = FLASH_LEVELS[mineral]
+	var peak: float = level["tint"]
+	if peak <= 0.0:
 		return  # 돌은 변화 없음
 
-	if _dim_tween != null and _dim_tween.is_valid():
-		_dim_tween.kill()
-	_dim_tween = create_tween()
-	_dim_tween.tween_property(_dim, "color:a", target, DIM_IN_TIME)
-	_dim_tween.tween_interval(level["hold"])
-	_dim_tween.tween_property(_dim, "color:a", REST_DIM_ALPHA, DIM_RECOVER_TIME)
+	if _flash_tween != null and _flash_tween.is_valid():
+		_flash_tween.kill()
+	_flash_tween = create_tween()
+	_flash_tween.tween_property(_roulette, "modulate", _gray(peak), FLASH_IN_TIME)
+	_flash_tween.tween_interval(level["hold"])
+	_flash_tween.tween_property(_roulette, "modulate", _gray(ROULETTE_REST_TINT), FLASH_RECOVER_TIME)
+
+
+## 색은 그대로 두고 밝기만 곱하는 회색. 1보다 크면 밝아지고 작으면 어두워진다
+func _gray(value: float) -> Color:
+	return Color(value, value, value)
 
 
 ## 파편이 위로 얼마나 도달하게 할지. 등급 차이는 개수가 아니라 이 범위에서 온다.
