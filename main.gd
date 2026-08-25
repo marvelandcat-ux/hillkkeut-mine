@@ -33,16 +33,15 @@ const SHOP_BUTTON_FONT_SIZE := 32
 # 화면이 통째로 깜빡이면 영상 시청에 방해가 되고, 뭐가 걸렸는지도 안 읽힌다
 const REST_DIM_ALPHA := 0.15
 
-# 룰렛 평소 밝기. 눌러두지 않는다 — 어두울 때와 밝을 때 차이가 크면 눈에 피로하다
-const ROULETTE_REST_TINT := 1.0
-# 밝아지는 건 결과와 붙어야 하니 빠르게, 돌아오는 건 느리게
-const FLASH_IN_TIME := 0.06
-const FLASH_RECOVER_TIME := 0.30
+# 룰렛은 평소 이 밝기로 가라앉아 있다. 차이가 너무 크면 눈이 피로해서 살짝만 낮춘다
+const ROULETTE_REST_TINT := 0.85
+# 한 번 반짝하고 끝. 켜지는 건 결과와 붙어야 하니 빠르게, 어둠으로는 부드럽게 돌아온다
+const FLASH_IN_TIME := 0.05
+const FLASH_RECOVER_TIME := 0.25
 # 반짝이는 건 금·다이아뿐이다. 등급마다 세기를 달리하면 차이를 읽느라 화면을 보게 되고,
 # 돌·철은 자주 나와서 반짝이면 신호가 아니라 소음이 된다
 const FLASH_MINERALS := ["금", "다이아"]
 const FLASH_TINT := 1.3
-const FLASH_HOLD := 0.3
 
 @onready var _roulette: Roulette = $Roulette
 @onready var _pointer: Sprite2D = $Pointer
@@ -78,7 +77,6 @@ func _ready() -> void:
 	_shop.upgrade_requested.connect(_on_upgrade_requested)
 	_shop_button.pressed.connect(_open_shop)
 	_settings_button.pressed.connect(_open_settings)
-	_refresh_pulse()
 
 
 ## 터치는 project.godot에서 마우스 이벤트로 바꿔서 받는다.
@@ -144,7 +142,6 @@ func _on_spun(index: int, mineral: String, multiplier: int) -> void:
 	var origin := _roulette.get_wedge_rim_global(index)
 	_shards.burst(origin, mineral, _shard_reach(mineral, origin))
 
-	_refresh_pulse()
 	_advance_palette()
 
 
@@ -184,16 +181,6 @@ func _on_upgrade_requested(mineral: String) -> void:
 	_upgrades.upgrade(mineral)
 	_carat_odometer.set_value(_carat)
 	_shop.refresh(_carat)
-	_refresh_pulse()
-
-
-## 살 수 있게 된 칸만 맥동시킨다. 뱃지도 팝업도 쓰지 않으므로 이게 유일한 신호다
-func _refresh_pulse() -> void:
-	var affordable := []
-	for mineral in Minerals.BASE_MULTIPLIERS:
-		if _upgrades.can_upgrade(mineral, _carat):
-			affordable.append(mineral)
-	_roulette.set_pulsing(affordable)
 
 
 ## ★시스템 밝기 API를 쓰지 않는다★
@@ -207,7 +194,6 @@ func _flash_roulette(mineral: String) -> void:
 		_flash_tween.kill()
 	_flash_tween = create_tween()
 	_flash_tween.tween_property(_roulette, "modulate", _gray(FLASH_TINT), FLASH_IN_TIME)
-	_flash_tween.tween_interval(FLASH_HOLD)
 	_flash_tween.tween_property(_roulette, "modulate", _gray(ROULETTE_REST_TINT), FLASH_RECOVER_TIME)
 
 

@@ -24,10 +24,6 @@ const NUMBER_SIZE_RATIO := 0.11  # 반지름 대비 글자 크기
 const NUMBER_RADIUS_RATIO := 0.63  # 숫자를 놓을 위치 (중심에서 얼마나 바깥인지)
 const NUMBER_COLOR := Color("14140F")
 
-# 강화할 수 있는 칸은 천천히 맥동한다. 빠르게 깜빡이면 영상 시청에 방해된다
-const PULSE_PERIOD := 2.0
-const PULSE_PEAK := Color(1.35, 1.35, 1.35)
-
 # 룰렛 교체 연출. 흰색 플래시는 쓰지 않는다 — 어두운 방에서 보는 유저가 대부분이다
 const DOMINO_STEP_DELAY := 0.03  # 12칸 × 0.03 = 0.36초
 const FLIP_TIME := 0.5
@@ -74,8 +70,6 @@ var _result_index := -1  # 첫 탭에서 확정된 결과. 연출이 끝날 때�
 var _slow_down_tween: Tween = null
 var _skipped := false  # 빨리감기는 한 번만 먹힌다
 var _upgrades: Upgrades = null
-var _pulsing: Array = []  # 지금 강화할 수 있어서 맥동시킬 광물들
-var _pulse_time := 0.0
 var _palette_step := 0
 var _transition_tween: Tween = null
 var _transition_count := 0
@@ -122,7 +116,6 @@ func _process(delta: float) -> void:
 		number.rotation = rotation if mirrored else -rotation
 		number.scale.x = -1.0 if mirrored else 1.0
 
-	_animate_pulse(delta)
 	_advance_auto(delta)
 
 
@@ -320,25 +313,6 @@ func _refresh_numbers() -> void:
 	for index in _numbers.size():
 		# 칸은 좁아서 배수가 커지면 압축 표기가 필수다 (×1.2만)
 		_numbers[index].text = "×%s" % CaratFormat.to_number_text(multiplier_of(Minerals.ORDER[index]))
-
-
-## 강화할 수 있게 된 광물들. 여기 담긴 칸만 맥동한다 (뱃지·팝업 대신 쓰는 유일한 신호)
-func set_pulsing(minerals: Array) -> void:
-	_pulsing = minerals
-	if _pulsing.is_empty():
-		_pulse_time = 0.0
-		for wedge in _wedges:
-			wedge.self_modulate = Color.WHITE
-
-
-func _animate_pulse(delta: float) -> void:
-	if _pulsing.is_empty():
-		return
-	_pulse_time = fmod(_pulse_time + delta, PULSE_PERIOD)
-	var wave := 0.5 - 0.5 * cos(TAU * _pulse_time / PULSE_PERIOD)
-	for index in _wedges.size():
-		var lit: bool = Minerals.ORDER[index] in _pulsing
-		_wedges[index].self_modulate = Color.WHITE.lerp(PULSE_PEAK, wave) if lit else Color.WHITE
 
 
 func is_transitioning() -> bool:
