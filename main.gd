@@ -15,15 +15,16 @@ const TOP_DEAD_ZONE_RATIO := 1.0 / 3.0  # 상단 1/3은 PIP 영상에 가려지�
 const AUTO_HOLD_TIME := 0.35  # 이만큼 누르고 있으면 자동 모드로 들어간다
 const AUTO_ZONE_RATIO := 1.12  # 룰렛 반지름 대비 꾹 누르기가 먹는 범위 (링 포함 룰렛 전체)
 
-# 결과가 나올 때 주는 미세한 진동. 등급이 높을수록 조금 길다 —
-# 화면을 안 봐도 알 수 있어야 하는 게임이라 진동도 같은 정보를 나른다
+# 결과가 나올 때 주는 진동. 등급이 높을수록 길다 —
+# 화면을 안 봐도 알 수 있어야 하는 게임이라 진동도 같은 정보를 나른다.
+# 50ms 밑으로는 폰 진동 모터가 예열되기 전에 끝나서 아무것도 안 느껴진다
 const HAPTIC_MS := {
-	"돌": 12,
-	"철": 22,
-	"금": 34,
-	"다이아": 55,
+	"돌": 30,
+	"철": 70,
+	"금": 130,
+	"다이아": 260,
 }
-const AUTO_START_HAPTIC_MS := 18  # 자동 모드가 켜졌다는 신호
+const AUTO_START_HAPTIC_MS := 50  # 자동 모드가 켜졌다는 신호
 
 const CARAT_FONT_COLOR := Color("F2F0EA")
 const SHOP_BUTTON_FONT_SIZE := 32

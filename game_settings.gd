@@ -40,10 +40,11 @@ func set_vibration(on: bool) -> void:
 	_save()
 
 
-## 진동은 전부 이 함수를 거친다. 설정이 꺼져 있으면 조용히 무시한다
+## 진동은 전부 이 함수를 거친다. 설정이 꺼져 있으면 조용히 무시한다.
+## 세기를 지정하지 않으면 폰 기본값(대개 약하다)을 써서 짧은 진동이 묻힌다 — 최대로 준다
 func vibrate(ms: int) -> void:
 	if vibration_on:
-		Input.vibrate_handheld(ms)
+		Input.vibrate_handheld(ms, 1.0)
 
 
 func _ensure_bus(bus_name: String) -> void:
